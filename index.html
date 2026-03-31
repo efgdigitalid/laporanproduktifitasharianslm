@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Laporan Harian Salesman — EFG Digital</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0f1117;--card:#181c27;--card2:#1e2335;--border:#272d42;
+  --accent:#3b82f6;--green:#22c55e;--orange:#f59e0b;--red:#ef4444;
+  --text:#e8ecf4;--muted:#4a5568;--muted2:#6b7280;
+  --font:'Plus Jakarta Sans',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:13px 18px;
+  display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+.logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#6366f1);
+  display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0}
+.topbar-info h1{font-size:14px;font-weight:700}
+.topbar-info p{font-size:11px;color:var(--muted2);margin-top:1px}
+.topbar-siklus{margin-left:auto;font-size:10px;font-weight:700;color:var(--orange);
+  border:1px solid rgba(245,158,11,.3);padding:4px 10px;border-radius:7px;white-space:nowrap}
+.content{padding:16px;max-width:480px;margin:0 auto;padding-bottom:40px}
+.steps{display:flex;gap:6px;margin-bottom:16px}
+.sdot{flex:1;height:3px;border-radius:2px;background:var(--border);transition:background .3s}
+.sdot.active{background:var(--accent)}.sdot.done{background:var(--green)}
+
+/* PILIH KODE */
+.select-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px}
+.select-card h2{font-size:16px;font-weight:700;margin-bottom:4px}
+.select-card p{font-size:12px;color:var(--muted2);margin-bottom:18px}
+.kode-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.kode-btn{background:var(--card2);border:1.5px solid var(--border);border-radius:10px;
+  padding:14px 4px;font-family:var(--font);font-size:12px;font-weight:700;
+  color:var(--muted2);cursor:pointer;transition:all .15s;text-align:center}
+.kode-btn:hover{border-color:var(--accent);color:var(--text)}
+.kode-btn.sel{background:rgba(59,130,246,.12);border-color:var(--accent);color:var(--accent)}
+
+.btn-main{width:100%;padding:14px;border:none;border-radius:12px;
+  font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-blue{background:var(--accent);color:#fff}
+.btn-blue:disabled{opacity:.35;cursor:not-allowed}
+.btn-green{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff}
+.btn-green:disabled{opacity:.4;cursor:not-allowed}
+
+/* BANNER */
+.banner{border-radius:10px;padding:11px 14px;margin-bottom:10px;
+  display:flex;align-items:flex-start;gap:9px;font-size:12px;font-weight:600;line-height:1.5}
+.banner.red{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+.banner.orange{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--orange)}
+.banner.green{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);color:var(--green)}
+.banner.blue{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);color:var(--accent)}
+.banner-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+
+/* SIKLUS BAR */
+.siklus-bar{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);
+  border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.siklus-bar .lbl{font-size:10px;color:rgba(245,158,11,.7);font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.siklus-bar .val{font-size:13px;font-weight:700;color:var(--orange)}
+
+/* DATE */
+.date-row{display:flex;gap:8px;margin-bottom:10px}
+.dfield{flex:1;background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px}
+.dfield label{display:block;font-size:9px;font-weight:700;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:5px}
+.dfield input{width:100%;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--font);font-size:13px;font-weight:600}
+.dfield input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);cursor:pointer}
+
+/* SECTION */
+.sec{background:var(--card);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;transition:border-color .2s}
+.sec.has-error{border-color:var(--red)}.sec.all-ok{border-color:var(--green)}
+.sec-head{background:var(--card2);padding:11px 15px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.sec-arrow{color:var(--orange);font-size:13px}
+.sec-title{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--orange);text-transform:uppercase}
+.sec-tag{margin-left:auto;font-size:9px;color:var(--muted2);border:1px solid var(--border);padding:2px 8px;border-radius:10px}
+.sec-status{font-size:10px;font-weight:700;padding:2px 8px;border-radius:8px;flex-shrink:0}
+.sec-status.ok{background:rgba(34,197,94,.1);color:var(--green)}
+.sec-status.err{background:rgba(239,68,68,.1);color:var(--red)}
+.sec-body{padding:13px 15px;display:flex;flex-direction:column;gap:9px}
+
+.frow{display:flex;align-items:center;gap:7px;min-height:34px}
+.flabel{font-size:11px;color:var(--muted2);flex:0 0 116px;font-weight:500;line-height:1.3}
+.flabel small{display:block;font-size:9px;color:var(--muted);margin-top:1px;font-weight:400}
+.fsep{color:var(--border);font-size:12px;flex-shrink:0}
+.finp{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;
+  padding:7px 10px;outline:none;color:var(--text);font-family:var(--font);
+  font-size:12px;font-weight:600;transition:border-color .15s;min-width:0}
+.finp:focus{border-color:var(--accent)}
+.finp::placeholder{color:var(--muted);font-size:11px;font-weight:400}
+.finp.ro{background:var(--card2);color:var(--muted2);cursor:not-allowed;border-color:transparent}
+.finp.locked{background:rgba(34,197,94,.05);border-color:rgba(34,197,94,.3);color:var(--green);cursor:not-allowed}
+.finp.auto-blue{background:rgba(59,130,246,.06);border-color:rgba(59,130,246,.2);color:var(--accent);font-weight:700;cursor:default}
+.finp.auto-green{background:rgba(34,197,94,.06);border-color:rgba(34,197,94,.2);color:var(--green);font-weight:700;cursor:default}
+.finp.auto-orange{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.2);color:var(--orange);font-weight:700;cursor:default}
+.finp.wajib{border-color:rgba(239,68,68,.5) !important;background:rgba(239,68,68,.04)}
+.funit{font-size:10px;color:var(--muted2);flex-shrink:0}
+.funit-rb{font-size:9px;color:var(--orange);flex-shrink:0;font-weight:700;
+  background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);
+  padding:2px 6px;border-radius:6px;white-space:nowrap}
+.frp{font-size:11px;color:var(--orange);font-weight:700;flex-shrink:0}
+.fdouble{display:flex;gap:6px;flex:1}.fdouble .finp{flex:1}
+.findent{padding-left:14px;border-left:2px solid var(--border)}
+
+/* LOCK BADGE */
+.lock-badge{font-size:9px;font-weight:700;color:var(--green);
+  background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);
+  padding:2px 7px;border-radius:8px;flex-shrink:0;letter-spacing:.5px}
+
+.val-msg{font-size:11px;padding:5px 10px;border-radius:6px;margin-top:1px;display:none;font-weight:600}
+.val-msg.show{display:block}
+.val-msg.err{background:rgba(239,68,68,.1);color:var(--red)}
+.val-msg.ok{background:rgba(34,197,94,.1);color:var(--green)}
+.val-msg.warn{background:rgba(245,158,11,.1);color:var(--orange)}
+
+.val-summary{border-radius:10px;padding:12px 14px;margin-bottom:12px;display:none}
+.val-summary.show{display:block}
+.val-summary.blocking{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25)}
+.val-summary h4{font-size:12px;font-weight:700;margin-bottom:7px;color:var(--red)}
+.val-summary ul{list-style:none;display:flex;flex-direction:column;gap:3px}
+.val-summary ul li{font-size:11px;padding-left:16px;position:relative}
+.val-summary ul li::before{content:'x';position:absolute;left:0;color:var(--red)}
+
+.btn-ghost{width:100%;padding:11px;border:1.5px dashed var(--border);background:transparent;
+  border-radius:10px;font-family:var(--font);font-size:11px;font-weight:600;
+  color:var(--muted2);cursor:pointer;margin-top:8px;transition:all .2s}
+.btn-ghost:hover{border-color:var(--red);color:var(--red)}
+
+/* POD */
+.pod-header{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0 8px;border-bottom:1px solid var(--border);margin-bottom:10px}
+.pod-header-label{font-size:10px;font-weight:800;letter-spacing:1.5px;color:var(--red);text-transform:uppercase}
+.pod-header-count{font-size:10px;font-weight:700;color:var(--muted2);
+  background:var(--card2);border:1px solid var(--border);padding:2px 8px;border-radius:10px}
+.pod-list{display:flex;flex-direction:column;gap:8px}
+.pod-row{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 12px;position:relative}
+.pod-row-num{position:absolute;top:-8px;left:10px;font-size:9px;font-weight:800;
+  color:var(--red);background:var(--bg);padding:0 5px}
+.pod-row-fields{display:grid;grid-template-columns:1fr 90px;gap:6px;margin-bottom:6px}
+.pod-inp{background:var(--card2);border:1.5px solid var(--border);border-radius:7px;
+  padding:7px 10px;outline:none;color:var(--text);font-family:var(--font);
+  font-size:12px;font-weight:500;transition:border-color .15s;width:100%}
+.pod-inp:focus{border-color:var(--red)}
+.pod-inp::placeholder{color:var(--muted);font-size:11px}
+.pod-inp.rp-inp{font-weight:700;color:var(--orange)}
+.pod-del{position:absolute;top:8px;right:10px;background:rgba(239,68,68,.1);
+  border:1px solid rgba(239,68,68,.2);border-radius:6px;color:var(--red);
+  font-size:11px;cursor:pointer;padding:3px 8px;font-family:var(--font)}
+.pod-total{display:flex;justify-content:space-between;align-items:center;
+  background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);
+  border-radius:8px;padding:9px 13px;margin-top:8px}
+.pod-total-label{font-size:11px;font-weight:700;color:var(--red)}
+.pod-total-val{font-size:13px;font-weight:800;color:var(--red)}
+.btn-add-pod{display:flex;align-items:center;justify-content:center;gap:7px;
+  width:100%;padding:10px;background:rgba(239,68,68,.07);
+  border:1.5px dashed rgba(239,68,68,.3);border-radius:9px;
+  font-family:var(--font);font-size:11px;font-weight:700;
+  color:var(--red);cursor:pointer;margin-top:8px;transition:all .2s}
+.btn-add-pod:hover{background:rgba(239,68,68,.12)}
+.pod-empty{text-align:center;padding:12px;font-size:12px;color:var(--muted2);font-style:italic}
+
+.loader{display:none;position:fixed;inset:0;background:rgba(15,17,23,.93);
+  z-index:100;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.loader.show{display:flex}
+.spin{width:42px;height:42px;border:3px solid var(--border);border-top-color:var(--accent);
+  border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loader p{font-size:13px;font-weight:600;color:var(--muted2)}
+
+.suc-wrap{display:none;text-align:center;padding:50px 20px}
+.suc-wrap.show{display:block}
+.suc-ico{font-size:70px;animation:pop .4s ease}
+@keyframes pop{0%{transform:scale(.3);opacity:0}80%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+.suc-wrap h2{font-size:22px;font-weight:800;margin:16px 0 8px}
+.suc-wrap p{font-size:13px;color:var(--muted2)}
+.btn-again{display:inline-block;margin-top:22px;padding:13px 28px;
+  background:var(--accent);color:#fff;border:none;border-radius:12px;
+  font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer}
+.err-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
+  border-radius:8px;padding:9px 13px;font-size:12px;color:var(--red);
+  margin-bottom:10px;display:none}
+.err-msg.show{display:block}
+.sel-bar{background:var(--card2);border:1px solid var(--border);border-radius:12px;
+  padding:11px 15px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.kode-chip{background:var(--accent);color:#fff;font-size:13px;font-weight:800;padding:4px 12px;border-radius:7px;letter-spacing:1px}
+.change-btn{font-size:11px;color:var(--muted2);cursor:pointer;padding:6px 10px;
+  border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--font)}
+.form-wrap{display:none}.form-wrap.show{display:block}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">PS</div>
+  <div class="topbar-info">
+    <h1>Laporan Harian Salesman</h1>
+    <p id="topDate">EFG Digital</p>
+  </div>
+  <div class="topbar-siklus" id="topSiklus">—</div>
+</div>
+
+<div class="loader" id="loader"><div class="spin"></div><p id="loaderMsg">Memuat...</p></div>
+
+<div class="content">
+  <div class="steps">
+    <div class="sdot active" id="d1"></div>
+    <div class="sdot" id="d2"></div>
+    <div class="sdot" id="d3"></div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div id="stepPilih">
+    <div class="select-card">
+      <h2>Pilih Kode Salesman</h2>
+      <p>Pilih kode Anda untuk mengisi laporan hari ini</p>
+      <div class="kode-grid" id="kodeGrid"></div>
+      <button class="btn-main btn-blue" id="btnLanjut" disabled onclick="goForm()">Lanjut →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: FORM -->
+  <div class="form-wrap" id="stepForm">
+    <div class="sel-bar">
+      <span class="kode-chip" id="badgeKode">—</span>
+      <button class="change-btn" onclick="backPilih()">← Ganti Kode</button>
+    </div>
+
+    <div class="siklus-bar">
+      <span>📅</span>
+      <div><div class="lbl">Siklus Aktif</div><div class="val" id="siklusVal">—</div></div>
+    </div>
+
+    <!-- BANNER NOTIFIKASI -->
+    <div id="bannerArea"></div>
+
+    <div class="date-row">
+      <div class="dfield"><label>Hari</label><input type="text" id="hari"></div>
+      <div class="dfield"><label>Tanggal</label><input type="date" id="tanggal"></div>
+    </div>
+
+    <!-- ══ EC ══ -->
+    <div class="sec" id="secEC">
+      <div class="sec-head">
+        <span class="sec-arrow">➫</span><span class="sec-title">EC</span>
+        <span class="sec-tag">Effective Call</span>
+        <span class="sec-status" id="stEC"></span>
+      </div>
+      <div class="sec-body">
+        <div class="frow">
+          <span class="flabel">Target</span><span class="fsep">:</span>
+          <input class="finp ro" id="ec_target" value="26" readonly><span class="funit">Tk/&gt;85%</span>
+        </div>
+        <div class="frow">
+          <span class="flabel">Call Day</span><span class="fsep">:</span>
+          <input class="finp" id="ec_callday" placeholder="0" oninput="calcEC()"><span class="funit">Tk</span>
+        </div>
+        <div class="frow">
+          <span class="flabel">Call MTD</span><span class="fsep">:</span>
+          <input class="finp" id="ec_callmtd" placeholder="0" oninput="calcEC()"><span class="funit">Tk</span>
+        </div>
+        <div class="frow">
+          <span class="flabel">EC Hi<small>% = EC Hi ÷ Call Day</small></span><span class="fsep">:</span>
+          <div class="fdouble">
+            <input class="finp" id="ec_hi_tk" placeholder="Tk" oninput="calcEC()">
+            <input class="finp auto-blue" id="ec_hi_pct" readonly tabindex="-1">
+          </div>
+        </div>
+        <div class="frow">
+          <span class="flabel">EC MTD<small>% = EC MTD ÷ Call MTD</small></span><span class="fsep">:</span>
+          <div class="fdouble">
+            <input class="finp" id="ec_mtd_tk" placeholder="Tk" oninput="calcEC()">
+            <input class="finp auto-blue" id="ec_mtd_pct" readonly tabindex="-1">
+          </div>
+        </div>
+        <div class="val-msg" id="vmEC"></div>
+      </div>
+    </div>
+
+    <!-- ══ ITEM ══ -->
+    <div class="sec" id="secItem">
+      <div class="sec-head">
+        <span class="sec-arrow">➫</span><span class="sec-title">ITEM</span>
+        <span class="sec-tag">Jenis Produk</span>
+        <span class="sec-status" id="stItem"></span>
+      </div>
+      <div class="sec-body">
+        <div class="frow">
+          <span class="flabel">Target</span><span class="fsep">:</span>
+          <input class="finp ro" id="item_target" value="8" readonly><span class="funit">Itm</span>
+        </div>
+        <div class="frow">
+          <span class="flabel">Total Item Hi</span><span class="fsep">:</span>
+          <input class="finp" id="item_total_hi" placeholder="jumlah item hari ini" oninput="calcItem()"><span class="funit">pcs</span>
+        </div>
+        <div class="frow">
+          <span class="flabel">Item Hi<small>÷ EC Hi</small></span><span class="fsep">:</span>
+          <div class="fdouble">
+            <input class="finp auto-blue" id="item_hi_val" readonly tabindex="-1">
+            <input class="finp" id="item_hi_info" placeholder="Ket">
+          </div>
+        </div>
+        <div class="frow">
+          <span class="flabel">Total Item MTD</span><span class="fsep">:</span>
+          <input class="finp" id="item_total_mtd" placeholder="total s/d hari ini" oninput="calcItem()"><span class="funit">pcs</span>
+        </div>
+        <div class="frow">
+          <span class="flabel">Item MTD<small>÷ EC MTD</small></span><span class="fsep">:</span>
+          <div class="fdouble">
+            <input class="finp auto-blue" id="item_mtd_val" readonly tabindex="-1">
+            <input class="finp" id="item_mtd_info" placeholder="Ket">
+          </div>
+        </div>
+        <div class="val-msg" id="vmItem"></div>
+      </div>
+    </div>
+
+    <!-- ══ SALES ══ -->
+    <div class="sec" id="secSales">
+      <div class="sec-head">
+        <span class="sec-arrow">➫</span><span class="sec-title">SALES</span>
+        <span class="sec-tag">Penjualan</span>
+        <span class="sec-status" id="stSales"></span>
+      </div>
+      <div class="sec-body">
+
+        <!-- TARGET MONTH: input sekali, terkunci setelah isi, batas 7 hari (tidak blocking) -->
+        <div class="frow" id="rowTgtMonth">
+          <span class="flabel">Target Month<small id="tgtMonthStatus">Wajib isi ≤ 7 hari</small></span><span class="fsep">:</span>
+          <span class="frp">Rp</span>
+          <input class="finp" id="sales_tgt_month" placeholder="cth: 500.000" oninput="calcSales()" type="number">
+          <span class="funit-rb">ribuan</span>
+          <span class="lock-badge hidden" id="lockTgtMonth">🔒 Terkunci</span>
+        </div>
+
+        <div class="frow" id="rowTgtYTDMonth">
+          <span class="flabel">Target YTD Month<small>Input manual</small></span><span class="fsep">:</span>
+          <span class="frp">Rp</span>
+          <input class="finp" id="sales_tgt_ytd_month" placeholder="cth: 6.000.000" oninput="calcSales()" type="number">
+          <span class="funit-rb">ribuan</span>
+          <span class="lock-badge hidden" id="lockTgtYTD">🔒</span>
+        </div>
+
+        <!-- HARI SIKLUS: input sekali di awal, terkunci permanen, WAJIB (blocking) -->
+        <div class="frow" id="rowHariSiklus">
+          <span class="flabel">Hari Siklus<small id="hariSiklusStatus">Wajib isi sekali</small></span><span class="fsep">:</span>
+          <input class="finp" id="sales_hari_siklus" placeholder="cth: 26" oninput="calcSales()" type="number">
+          <span class="funit">hari</span>
+          <span class="lock-badge hidden" id="lockHariSiklus">🔒 Terkunci</span>
+        </div>
+
+        <div class="frow">
+          <span class="flabel">Target Day<small>= Month ÷ Hari</small></span><span class="fsep">:</span>
+          <span class="frp">Rp</span>
+          <input class="finp auto-orange" id="sales_tgt_day" readonly tabindex="-1">
+        </div>
+        <div class="frow">
+          <span class="flabel">Sales Hi<small>% = Hi ÷ Target Day</small></span><span class="fsep">:</span>
+          <div class="fdouble">
+            <input class="finp" id="sales_hi_val" placeholder="cth: 20.000" oninput="calcSales()">
+            <input class="finp auto-blue" id="sales_hi_pct" readonly tabindex="-1">
+          </div>
+          <span class="funit-rb">ribuan</span>
+        </div>
+        <div class="frow">
+          <span class="flabel">Sales MTD<small>% = MTD ÷ Month</small></span><span class="fsep">:</span>
+          <div class="fdouble">
+            <input class="finp" id="sales_mtd_val" placeholder="cth: 50.000" oninput="calcSales()">
+            <input class="finp auto-blue" id="sales_mtd_pct" readonly tabindex="-1">
+          </div>
+          <span class="funit-rb">ribuan</span>
+        </div>
+        <div class="frow">
+          <span class="flabel">Growth YTD<small>% = YTD ÷ Target YTD</small></span><span class="fsep">:</span>
+          <div class="fdouble">
+            <input class="finp" id="sales_ytd_val" placeholder="cth: 80.000" oninput="calcSales()">
+            <input class="finp auto-blue" id="sales_ytd_pct" readonly tabindex="-1">
+          </div>
+          <span class="funit-rb">ribuan</span>
+        </div>
+        <div class="val-msg" id="vmSales"></div>
+      </div>
+    </div>
+
+    <!-- ══ OD ══ -->
+    <div class="sec" id="secOD">
+      <div class="sec-head">
+        <span class="sec-arrow">➫</span><span class="sec-title">OD</span>
+        <span class="sec-tag">Collection</span>
+        <span class="sec-status" id="stOD"></span>
+      </div>
+      <div class="sec-body">
+        <!-- Target Coll/EAR: INPUT MANUAL TIAP HARI (sama seperti Realisasi) -->
+        <div class="frow">
+          <span class="flabel">Target Coll/EAR<small>Isi setiap hari</small></span><span class="fsep">:</span>
+          <span class="frp">Rp</span>
+          <input class="finp" id="od_target" placeholder="cth: 206.000" oninput="calcOD()" type="number">
+          <span class="funit-rb">ribuan</span>
+        </div>
+        <div class="frow">
+          <span class="flabel">Realisasi/CD<small>Isi setiap hari</small></span><span class="fsep">:</span>
+          <span class="frp">Rp</span>
+          <input class="finp" id="od_realisasi" placeholder="cth: 190.000" oninput="calcOD()" type="number">
+          <span class="funit-rb">ribuan</span>
+        </div>
+        <div class="frow">
+          <span class="flabel">Collection%<small>= Realisasi ÷ Target</small></span><span class="fsep">:</span>
+          <input class="finp auto-green" id="od_collection" readonly tabindex="-1"><span class="funit">%</span>
+        </div>
+        <div class="frow findent">
+          <span class="flabel">OD in Value<small>= Target − Realisasi</small></span><span class="fsep">:</span>
+          <span class="frp">Rp</span>
+          <input class="finp auto-orange" id="od_value" readonly tabindex="-1">
+        </div>
+        <div class="frow findent">
+          <span class="flabel">Over Due%<small>= OD ÷ Target</small></span><span class="fsep">:</span>
+          <input class="finp auto-orange" id="od_overdue" readonly tabindex="-1"><span class="funit">%</span>
+        </div>
+        <div class="val-msg" id="vmOD"></div>
+
+        <!-- POD OUTLET -->
+        <div style="margin-top:4px">
+          <div class="pod-header">
+            <span class="pod-header-label">POD — Outlet Tidak Bayar</span>
+            <span class="pod-header-count" id="podCount">0 outlet</span>
+          </div>
+          <div class="pod-list" id="podList">
+            <div class="pod-empty" id="podEmpty">Belum ada outlet</div>
+          </div>
+          <div class="pod-total" id="podTotal" style="display:none">
+            <span class="pod-total-label">Total OD Outlet</span>
+            <span class="pod-total-val" id="podTotalVal">Rp 0</span>
+          </div>
+          <button class="btn-add-pod" onclick="addPodRow()">+ Tambah Outlet Tidak Bayar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="val-summary" id="valSummary"></div>
+    <div class="err-msg" id="errForm">Isi Tanggal terlebih dahulu</div>
+    <button class="btn-main btn-green" id="btnSubmit" onclick="submitForm()">✓ Kirim Laporan</button>
+    <button class="btn-ghost" onclick="backPilih()">← Kembali Pilih Kode</button>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="suc-wrap" id="stepOk">
+    <div class="suc-ico">✅</div>
+    <h2>Laporan Terkirim!</h2>
+    <p>Data berhasil tersimpan.<br>Terima kasih 🙏</p>
+    <button class="btn-again" onclick="ulang()">+ Laporan Baru</button>
+  </div>
+</div>
+
+<script>
+var GAS_URL = 'GANTI_URL_GOOGLE_APPS_SCRIPT_DISINI';
+
+var KODE      = ['S005','S016','S017','S018','S019','S120','S121']; // default, akan diganti dari GAS
+var HARI_NAMA = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+var pilihanKode      = null;
+var siklusAktif      = '';
+var targetData       = null;
+var hariSiklusLocked = false;
+var tgtMonthLocked   = false;
+var hariKeSiklus     = 0;
+var podCounter       = 0;
+
+// INIT
+(function(){
+  var now = new Date();
+  document.getElementById('topDate').textContent =
+    HARI_NAMA[now.getDay()] + ', ' + now.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  fetchSiklus();
+  fetchKodeList();
+})();
+
+function fetchKodeList(){
+  fetch(GAS_URL+'?action=get_salesman_list')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.ok && d.list && d.list.length > 0){
+        KODE = d.list;
+      }
+      buildKodeGrid();
+    })
+    .catch(function(){
+      buildKodeGrid(); // pakai default jika gagal
+    });
+}
+
+function buildKodeGrid(){
+  var grid = document.getElementById('kodeGrid');
+  grid.innerHTML = '';
+  KODE.forEach(function(k){
+    var b = document.createElement('button');
+    b.className='kode-btn'; b.textContent=k;
+    b.onclick=function(){ pilihKode(k); };
+    grid.appendChild(b);
+  });
+}
+
+function fetchSiklus(){
+  fetch(GAS_URL+'?action=get_siklus')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(d.ok){
+        siklusAktif = d.aktif||'';
+        document.getElementById('topSiklus').textContent = siklusAktif;
+        document.getElementById('siklusVal').textContent = siklusAktif;
+      }
+    }).catch(function(){});
+}
+
+function pilihKode(k){
+  pilihanKode = k;
+  document.querySelectorAll('.kode-btn').forEach(function(b){ b.classList.toggle('sel', b.textContent===k); });
+  document.getElementById('btnLanjut').disabled = false;
+}
+
+function goForm(){
+  if(!pilihanKode) return;
+  setLoader('Mengambil data...');
+  fetch(GAS_URL+'?action=get_target_salesman&kode='+pilihanKode+'&siklus='+encodeURIComponent(siklusAktif))
+    .then(function(r){ return r.json(); })
+    .then(function(d){ hideLoader(); targetData=d; setupForm(d); })
+    .catch(function(){ hideLoader(); targetData=null; setupForm(null); });
+}
+
+function setupForm(d){
+  document.getElementById('stepPilih').classList.add('hidden');
+  document.getElementById('stepForm').classList.add('show');
+  document.getElementById('badgeKode').textContent = pilihanKode;
+  document.getElementById('d1').classList.replace('active','done');
+  document.getElementById('d2').classList.add('active');
+
+  var now = new Date();
+  document.getElementById('tanggal').value = now.toISOString().split('T')[0];
+  document.getElementById('hari').value    = HARI_NAMA[now.getDay()];
+
+  hariKeSiklus      = (d && d.hari_ke)    || 0;
+  hariSiklusLocked  = false;
+  tgtMonthLocked    = false;
+
+  var banners = [];
+  var t = (d && d.target) ? d.target : null;
+
+  // ── HARI SIKLUS ──
+  if(t && t.sales_hari_siklus && String(t.sales_hari_siklus).trim() !== ''){
+    // Sudah ada → kunci permanen
+    var el = document.getElementById('sales_hari_siklus');
+    el.value = t.sales_hari_siklus;
+    el.setAttribute('readonly','');
+    el.classList.remove('wajib');
+    el.classList.add('locked');
+    document.getElementById('lockHariSiklus').classList.remove('hidden');
+    document.getElementById('hariSiklusStatus').textContent = 'Sudah terkunci';
+    hariSiklusLocked = true;
+  } else {
+    // Belum isi → wajib, highlight merah
+    var el2 = document.getElementById('sales_hari_siklus');
+    el2.classList.add('wajib');
+    el2.removeAttribute('readonly');
+    el2.classList.remove('locked');
+    document.getElementById('lockHariSiklus').classList.add('hidden');
+    document.getElementById('hariSiklusStatus').textContent = 'WAJIB isi sekali';
+    banners.push({type:'red', icon:'🔴', msg:'<strong>Hari Siklus belum diisi!</strong> Wajib diisi sekarang. Laporan tidak bisa divalidasi sebelum diisi.'});
+  }
+
+  // ── TARGET MONTH ──
+  if(t && t.sales_tgt_month && String(t.sales_tgt_month).trim() !== ''){
+    var tm = document.getElementById('sales_tgt_month');
+    tm.value = t.sales_tgt_month;
+    tm.setAttribute('readonly','');
+    tm.classList.remove('wajib'); tm.classList.add('locked');
+    document.getElementById('lockTgtMonth').classList.remove('hidden');
+    document.getElementById('tgtMonthStatus').textContent = 'Sudah terkunci';
+    tgtMonthLocked = true;
+    calcSales();
+  } else {
+    var tm2 = document.getElementById('sales_tgt_month');
+    tm2.removeAttribute('readonly'); tm2.classList.remove('locked');
+    document.getElementById('lockTgtMonth').classList.add('hidden');
+    var sisaHari = Math.max(0, 7 - hariKeSiklus);
+    if(hariKeSiklus > 7){
+      document.getElementById('tgtMonthStatus').textContent = 'Batas telah lewat';
+      tm2.setAttribute('readonly','');
+      banners.push({type:'orange', icon:'⚠️', msg:'Batas pengisian Target Month sudah lewat. Laporan tetap bisa dikirim.'});
+    } else {
+      document.getElementById('tgtMonthStatus').textContent = 'Isi dalam '+sisaHari+' hari';
+      if(sisaHari <= 3) banners.push({type:'orange', icon:'⚠️', msg:'<strong>Segera isi Target Month!</strong> Batas dalam '+sisaHari+' hari lagi.'});
+      else banners.push({type:'blue', icon:'📝', msg:'Isi Target Month untuk siklus ini (sisa '+sisaHari+' hari).'});
+    }
+  }
+
+  // ── TARGET YTD MONTH ── (sama seperti Target Month: sekali isi, terkunci, wajib isi)
+  var tgtYTDLocked = false;
+  if(t && t.sales_tgt_ytd_month && String(t.sales_tgt_ytd_month).trim() !== ''){
+    var ytdEl = document.getElementById('sales_tgt_ytd_month');
+    ytdEl.value = t.sales_tgt_ytd_month;
+    ytdEl.setAttribute('readonly','');
+    ytdEl.classList.remove('wajib'); ytdEl.classList.add('locked');
+    document.getElementById('lockTgtYTD').classList.remove('hidden');
+    tgtYTDLocked = true;
+  } else {
+    var ytdEl2 = document.getElementById('sales_tgt_ytd_month');
+    ytdEl2.removeAttribute('readonly'); ytdEl2.classList.remove('locked');
+    ytdEl2.classList.add('wajib');
+    document.getElementById('lockTgtYTD').classList.add('hidden');
+    if(hariKeSiklus > 7){
+      ytdEl2.setAttribute('readonly','');
+      banners.push({type:'orange', icon:'⚠️', msg:'Batas pengisian Target YTD Month sudah lewat.'});
+    } else {
+      var sisaYTD = Math.max(0, 7 - hariKeSiklus);
+      banners.push({type:'blue', icon:'📋', msg:'Isi <strong>Target YTD Month</strong> untuk siklus ini (batas '+sisaYTD+' hari).'});
+    }
+  }
+  window._tgtYTDLocked = tgtYTDLocked;
+
+  // ── TARGET EC & ITEM dari target tersimpan ──
+  if(t && t.ec_target)             document.getElementById('ec_target').value          = t.ec_target;
+  if(t && t.item_target)           document.getElementById('item_target').value        = t.item_target;
+  if(t && t.sales_tgt_ytd_month)  document.getElementById('sales_tgt_ytd_month').value = t.sales_tgt_ytd_month;
+
+  // Render banners
+  var area = document.getElementById('bannerArea');
+  area.innerHTML = '';
+  banners.forEach(function(b){
+    area.innerHTML += '<div class="banner '+b.type+'"><span class="banner-icon">'+b.icon+'</span><div>'+b.msg+'</div></div>';
+  });
+
+  calcOD();
+  validateAll();
+}
+
+function backPilih(){
+  targetData=null; hariSiklusLocked=false; tgtMonthLocked=false;
+  document.getElementById('stepForm').classList.remove('show');
+  document.getElementById('stepPilih').classList.remove('hidden');
+  document.querySelectorAll('.kode-btn').forEach(function(b){ b.classList.remove('sel'); });
+  pilihanKode=null;
+  document.getElementById('btnLanjut').disabled=true;
+  document.getElementById('d2').classList.remove('active');
+  document.getElementById('d1').classList.replace('done','active');
+}
+
+// Saat hari siklus diisi → langsung simpan ke GAS dan kunci
+document.getElementById('sales_hari_siklus').addEventListener('blur', function(){
+  if(hariSiklusLocked) return;
+  var val = this.value.trim();
+  if(!val || isNaN(val) || parseFloat(val) <= 0) return;
+  saveHariSiklus(val);
+});
+
+function saveHariSiklus(val){
+  setLoader('Menyimpan Hari Siklus...');
+  fetch(GAS_URL, {
+    method:'POST',
+    body: JSON.stringify({
+      action:'save_target_salesman',
+      kode_salesman: pilihanKode,
+      siklus: siklusAktif,
+      sales_hari_siklus: val,
+      sales_tgt_month: document.getElementById('sales_tgt_month').value || '',
+      sales_tgt_ytd_month: document.getElementById('sales_tgt_ytd_month').value || '',
+      od_target: ''
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    hideLoader();
+    if(d.ok || d.msg){
+      // Kunci hari siklus
+      var el = document.getElementById('sales_hari_siklus');
+      el.setAttribute('readonly','');
+      el.classList.remove('wajib');
+      el.classList.add('locked');
+      document.getElementById('lockHariSiklus').classList.remove('hidden');
+      document.getElementById('hariSiklusStatus').textContent = 'Sudah terkunci';
+      hariSiklusLocked = true;
+      // Hapus banner merah hari siklus
+      var area = document.getElementById('bannerArea');
+      var banners = area.querySelectorAll('.banner.red');
+      banners.forEach(function(b){ b.remove(); });
+      calcSales(); validateAll();
+    }
+  })
+  .catch(function(){ hideLoader(); });
+}
+
+// Saat target month diisi dan blur → simpan ke GAS dan kunci
+document.getElementById('sales_tgt_month').addEventListener('blur', function(){
+  if(tgtMonthLocked) return;
+  if(hariKeSiklus > 7) return;
+  var val = this.value.trim();
+  if(!val || isNaN(val) || parseFloat(val) <= 0) return;
+  saveTgtMonth(val);
+});
+
+// Saat target YTD month diisi dan blur → simpan ke GAS dan kunci
+document.getElementById('sales_tgt_ytd_month').addEventListener('blur', function(){
+  if(window._tgtYTDLocked) return;
+  if(hariKeSiklus > 7) return;
+  var val = this.value.trim();
+  if(!val || isNaN(val) || parseFloat(val) <= 0) return;
+  saveTgtYTDMonth(val);
+});
+
+function saveTgtMonth(val){
+  setLoader('Menyimpan Target Month...');
+  fetch(GAS_URL, {
+    method:'POST',
+    body: JSON.stringify({
+      action:'save_target_salesman',
+      kode_salesman: pilihanKode,
+      siklus: siklusAktif,
+      sales_tgt_month: val,
+      sales_tgt_ytd_month: document.getElementById('sales_tgt_ytd_month').value || '',
+      sales_hari_siklus: document.getElementById('sales_hari_siklus').value || '',
+      od_target: ''
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    hideLoader();
+    if(d.ok || d.msg){
+      var el = document.getElementById('sales_tgt_month');
+      el.setAttribute('readonly',''); el.classList.remove('wajib'); el.classList.add('locked');
+      document.getElementById('lockTgtMonth').classList.remove('hidden');
+      document.getElementById('tgtMonthStatus').textContent = 'Sudah terkunci';
+      tgtMonthLocked = true;
+      showBannerGreen('Target Month berhasil disimpan dan dikunci!');
+      calcSales();
+    }
+  })
+  .catch(function(){ hideLoader(); });
+}
+
+function saveTgtYTDMonth(val){
+  setLoader('Menyimpan Target YTD Month...');
+  fetch(GAS_URL, {
+    method:'POST',
+    body: JSON.stringify({
+      action:'save_target_salesman',
+      kode_salesman: pilihanKode,
+      siklus: siklusAktif,
+      sales_tgt_month: document.getElementById('sales_tgt_month').value || '',
+      sales_tgt_ytd_month: val,
+      sales_hari_siklus: document.getElementById('sales_hari_siklus').value || '',
+      od_target: ''
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    hideLoader();
+    if(d.ok || d.msg){
+      var el = document.getElementById('sales_tgt_ytd_month');
+      el.setAttribute('readonly',''); el.classList.remove('wajib'); el.classList.add('locked');
+      document.getElementById('lockTgtYTD').classList.remove('hidden');
+      window._tgtYTDLocked = true;
+      // Hapus banner wajib YTD
+      var area = document.getElementById('bannerArea');
+      var bbs = area.querySelectorAll('.banner.blue');
+      bbs.forEach(function(b){ if(b.textContent.indexOf('YTD')>-1) b.remove(); });
+      showBannerGreen('Target YTD Month berhasil disimpan dan dikunci!');
+      calcSales();
+    }
+  })
+  .catch(function(){ hideLoader(); });
+}
+
+function showBannerGreen(msg){
+  var area = document.getElementById('bannerArea');
+  var div = document.createElement('div');
+  div.className = 'banner green';
+  div.innerHTML = '<span class="banner-icon">✅</span><div>'+msg+'</div>';
+  area.prepend(div);
+  setTimeout(function(){ if(div.parentNode) div.parentNode.removeChild(div); }, 4000);
+}
+
+// ── HELPERS ──
+function parseN(s){ return parseFloat(String(s||'').replace(/[^0-9.]/g,''))||0; }
+function n(id){ return parseN((document.getElementById(id)||{value:''}).value); }
+function fmtAngka(v){ return Math.round(parseFloat(v)||0).toLocaleString('id-ID'); }
+function setPct(id, num, den){
+  var el=document.getElementById(id); if(!el) return;
+  el.value = (den>0&&num>=0) ? ((num/den)*100).toFixed(1)+'%' : '';
+}
+function setRp(id, val){
+  var el=document.getElementById(id); if(!el) return;
+  el.value = (!isNaN(val)&&val!==null) ? fmtAngka(val) : '';
+}
+function setSecSt(secId, stId, status){
+  var sec=document.getElementById(secId), st=document.getElementById(stId);
+  sec.classList.remove('has-error','all-ok'); st.className='sec-status'; st.textContent='';
+  if(status==='ok'){ sec.classList.add('all-ok'); st.classList.add('ok'); st.textContent='✓ OK'; }
+  if(status==='err'){ sec.classList.add('has-error'); st.classList.add('err'); st.textContent='Revisi'; }
+}
+function setVM(id, type, msg){
+  var el=document.getElementById(id); el.className='val-msg';
+  if(msg){ el.classList.add('show',type); el.textContent=msg; }
+}
+function v(id){ return ((document.getElementById(id)||{}).value||'').trim(); }
+function setLoader(msg){ document.getElementById('loaderMsg').textContent=msg||'Memuat...'; document.getElementById('loader').classList.add('show'); }
+function hideLoader(){ document.getElementById('loader').classList.remove('show'); }
+
+// ── CALC EC ──
+function calcEC(){
+  var ecTgt=n('ec_target')||26, hiTk=n('ec_hi_tk'), mtdTk=n('ec_mtd_tk');
+  var cDay=n('ec_callday'), cMTD=n('ec_callmtd');
+  // EC Hi% = EC Hi ÷ Call Day
+  setPct('ec_hi_pct',  hiTk,  cDay);
+  // EC MTD% = EC MTD ÷ Call MTD
+  setPct('ec_mtd_pct', mtdTk, cMTD);
+  var errs=[];
+  if(cDay>0&&cMTD>0&&cDay>cMTD) errs.push('Call Day > Call MTD');
+  if(hiTk>0&&mtdTk>0&&hiTk>mtdTk) errs.push('EC Hi > EC MTD');
+  var has=cDay||cMTD||hiTk||mtdTk;
+  if(!has){ setSecSt('secEC','stEC',null); setVM('vmEC','',''); }
+  else if(errs.length){ setSecSt('secEC','stEC','err'); setVM('vmEC','err','! '+errs.join(' | ')); }
+  else{ setSecSt('secEC','stEC','ok'); setVM('vmEC','ok','EC valid'); }
+  calcItem(); validateAll();
+}
+
+// ── CALC ITEM ──
+function calcItem(){
+  var ecHi=n('ec_hi_tk'), ecMTD=n('ec_mtd_tk');
+  var totHi=n('item_total_hi'), totMTD=n('item_total_mtd');
+  document.getElementById('item_hi_val').value  = (totHi>0&&ecHi>0)   ? (totHi/ecHi).toFixed(2)   : '';
+  document.getElementById('item_mtd_val').value = (totMTD>0&&ecMTD>0) ? (totMTD/ecMTD).toFixed(2) : '';
+  var errs=[];
+  if(totHi>0&&totMTD>0&&totHi>totMTD) errs.push('Total Item Hi > MTD');
+  var has=totHi||totMTD;
+  if(!has){ setSecSt('secItem','stItem',null); setVM('vmItem','',''); }
+  else if(errs.length){ setSecSt('secItem','stItem','err'); setVM('vmItem','err','! '+errs.join(' | ')); }
+  else{ setSecSt('secItem','stItem','ok'); setVM('vmItem','ok','Item valid'); }
+  validateAll();
+}
+
+// ── CALC SALES ──
+function calcSales(){
+  // Input dalam RIBUAN — kalikan 1000 untuk nilai asli
+  var tgtMonth = n('sales_tgt_month') * 1000;
+  var hari     = n('sales_hari_siklus');
+  var tgtYTD   = n('sales_tgt_ytd_month') * 1000;
+  var tgtDay   = (tgtMonth>0&&hari>0) ? tgtMonth/hari : 0;
+  var sHi  = n('sales_hi_val')  * 1000;
+  var sMTD = n('sales_mtd_val') * 1000;
+  var sYTD = n('sales_ytd_val') * 1000;
+  // Target Day tampil dalam ribuan
+  if(tgtDay>0) document.getElementById('sales_tgt_day').value = fmtAngka(Math.round(tgtDay/1000));
+  else document.getElementById('sales_tgt_day').value='';
+  setPct('sales_hi_pct',  sHi,  tgtDay);
+  setPct('sales_mtd_pct', sMTD, tgtMonth);
+  setPct('sales_ytd_pct', sYTD, tgtYTD);
+  var errs=[];
+  if(sHi>0&&sMTD>0&&sHi>sMTD) errs.push('Sales Hi > Sales MTD');
+  var has=sHi||sMTD||tgtMonth;
+  if(!has){ setSecSt('secSales','stSales',null); setVM('vmSales','',''); }
+  else if(errs.length){ setSecSt('secSales','stSales','err'); setVM('vmSales','err','! '+errs.join(' | ')); }
+  else{ setSecSt('secSales','stSales','ok'); setVM('vmSales','ok','Sales valid'); }
+  validateAll();
+}
+
+// ── CALC OD ──
+function calcOD(){
+  // Input dalam RIBUAN — kalikan 1000 untuk nilai asli
+  var target = n('od_target')   * 1000;
+  var real   = n('od_realisasi')* 1000;
+  setPct('od_collection', real, target);
+  var odVal = target>0 ? Math.max(0, target-real) : 0;
+  // OD in Value tampil dalam ribuan
+  if(target>0) document.getElementById('od_value').value = fmtAngka(Math.round(odVal/1000));
+  else document.getElementById('od_value').value='';
+  setPct('od_overdue', odVal, target);
+  var has=target||real;
+  if(has){
+    var cp=target>0?((real/target)*100).toFixed(1):'-';
+    setSecSt('secOD','stOD','ok');
+    setVM('vmOD','ok','Collection '+cp+'% | OD Rp '+fmtAngka(Math.round(odVal/1000))+' rb');
+  } else { setSecSt('secOD','stOD',null); setVM('vmOD','',''); }
+  validateAll();
+}
+
+// ── VALIDATE ──
+function validateAll(){
+  var errs=[];
+  // Hari siklus WAJIB — blocking
+  if(!hariSiklusLocked && n('sales_hari_siklus')<=0){
+    errs.push('Hari Siklus wajib diisi terlebih dahulu');
+  }
+  var cDay=n('ec_callday'),cMTD=n('ec_callmtd'),ecHi=n('ec_hi_tk'),ecMTD=n('ec_mtd_tk');
+  var totHi=n('item_total_hi'),totMTD=n('item_total_mtd');
+  var sHi=n('sales_hi_val'),sMTD=n('sales_mtd_val');
+  if(cDay>0&&cMTD>0&&cDay>cMTD) errs.push('Call Day > Call MTD');
+  if(ecHi>0&&ecMTD>0&&ecHi>ecMTD) errs.push('EC Hi > EC MTD');
+  if(totHi>0&&totMTD>0&&totHi>totMTD) errs.push('Total Item Hi > Item MTD');
+  if(sHi>0&&sMTD>0&&sHi>sMTD) errs.push('Sales Hi > Sales MTD');
+  var sum=document.getElementById('valSummary'), btn=document.getElementById('btnSubmit');
+  if(errs.length){
+    sum.className='val-summary show blocking';
+    sum.innerHTML='<h4>Laporan Tidak Dapat Dikirim</h4><ul>'+errs.map(function(e){ return '<li>'+e+'</li>'; }).join('')+'</ul>';
+    btn.disabled=true; btn.style.opacity='0.4';
+  } else {
+    sum.className='val-summary'; btn.disabled=false; btn.style.opacity='';
+  }
+}
+
+// ── SUBMIT ──
+function submitForm(){
+  var tgl=v('tanggal');
+  if(!tgl){ var e=document.getElementById('errForm'); e.classList.add('show'); setTimeout(function(){ e.classList.remove('show'); },3000); return; }
+  if(!hariSiklusLocked && n('sales_hari_siklus')<=0){ alert('Hari Siklus wajib diisi dan disimpan terlebih dahulu!'); return; }
+  var cDay=n('ec_callday'),cMTD=n('ec_callmtd'),ecHi=n('ec_hi_tk'),ecMTD=n('ec_mtd_tk');
+  var totHi=n('item_total_hi'),totMTD=n('item_total_mtd'),sHi=n('sales_hi_val'),sMTD=n('sales_mtd_val');
+  if((cDay>0&&cMTD>0&&cDay>cMTD)||(ecHi>0&&ecMTD>0&&ecHi>ecMTD)||(totHi>0&&totMTD>0&&totHi>totMTD)||(sHi>0&&sMTD>0&&sHi>sMTD)){
+    alert('Perbaiki data yang tidak valid terlebih dahulu.'); return;
+  }
+  setLoader('Menyimpan laporan...');
+  document.getElementById('btnSubmit').disabled=true;
+  // Konversi ribuan ke nilai asli (x1000)
+  var rb = 1000;
+  var payload={
+    action:'submit_laporan', kode_salesman:pilihanKode,
+    hari:v('hari'), tanggal:tgl, supervisor:'',
+    ec_target:v('ec_target'), ec_callday:v('ec_callday'), ec_callmtd:v('ec_callmtd'),
+    ec_hi_tk:v('ec_hi_tk'), ec_hi_pct:v('ec_hi_pct'), ec_mtd_tk:v('ec_mtd_tk'), ec_mtd_pct:v('ec_mtd_pct'),
+    item_target:v('item_target'), item_total_hi:v('item_total_hi'), item_total_mtd:v('item_total_mtd'),
+    item_hi_val:v('item_hi_val'), item_hi_info:v('item_hi_info'), item_mtd_val:v('item_mtd_val'), item_mtd_info:v('item_mtd_info'),
+    // Sales — simpan nilai asli (ribuan x1000)
+    sales_tgt_month:    String(n('sales_tgt_month')    * rb),
+    sales_tgt_ytd_month:String(n('sales_tgt_ytd_month')* rb),
+    sales_hari_siklus:v('sales_hari_siklus'),
+    sales_tgt_day:      String(n('sales_tgt_day')      * rb),
+    sales_hi_val:       String(n('sales_hi_val')       * rb),
+    sales_hi_pct:v('sales_hi_pct'),
+    sales_mtd_val:      String(n('sales_mtd_val')      * rb),
+    sales_mtd_pct:v('sales_mtd_pct'),
+    sales_ytd_val:      String(n('sales_ytd_val')      * rb),
+    sales_ytd_pct:v('sales_ytd_pct'),
+    // OD — simpan nilai asli
+    od_target:    String(n('od_target')   * rb),
+    od_realisasi: String(n('od_realisasi')* rb),
+    od_collection:v('od_collection'),
+    od_value:     String(n('od_value')    * rb),
+    od_overdue:v('od_overdue'),
+    // POD — jumlah juga dalam ribuan, konversi
+    pod_outlets: getPodData().map(function(p){ return {toko:p.toko, jumlah:String(parseFloat(p.jumlah||0)*rb), keterangan:p.keterangan}; }),
+    is_valid: true
+  };
+  fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload)})
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      hideLoader();
+      if(d.ok){
+        document.getElementById('stepForm').classList.remove('show');
+        document.getElementById('stepOk').classList.add('show');
+        document.getElementById('d2').classList.replace('active','done');
+        document.getElementById('d3').classList.add('active');
+      } else { alert('Gagal: '+d.msg); document.getElementById('btnSubmit').disabled=false; }
+    })
+    .catch(function(){ hideLoader(); alert('Koneksi gagal.'); document.getElementById('btnSubmit').disabled=false; });
+}
+
+function ulang(){
+  document.getElementById('stepOk').classList.remove('show');
+  document.getElementById('stepForm').classList.add('show');
+  document.getElementById('d3').classList.remove('active');
+  document.getElementById('d2').classList.remove('done');
+  document.getElementById('d2').classList.add('active');
+  document.getElementById('btnSubmit').disabled=false; document.getElementById('btnSubmit').style.opacity='';
+  ['ec_callday','ec_callmtd','ec_hi_tk','ec_hi_pct','ec_mtd_tk','ec_mtd_pct',
+   'item_total_hi','item_total_mtd','item_hi_val','item_hi_info','item_mtd_val','item_mtd_info',
+   'sales_hi_val','sales_hi_pct','sales_mtd_val','sales_mtd_pct','sales_ytd_val','sales_ytd_pct',
+   'od_target','od_realisasi','od_collection','od_value','od_overdue'
+  ].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  ['secEC','secItem','secSales','secOD'].forEach(function(id){ var s=document.getElementById(id); s.classList.remove('has-error','all-ok'); });
+  ['stEC','stItem','stSales','stOD'].forEach(function(id){ var s=document.getElementById(id); s.textContent=''; s.className='sec-status'; });
+  document.getElementById('valSummary').className='val-summary'; document.getElementById('valSummary').innerHTML='';
+  resetPod(); calcOD();
+}
+
+// ── POD ──
+function addPodRow(){
+  podCounter++;
+  var id=podCounter, list=document.getElementById('podList'), emp=document.getElementById('podEmpty');
+  if(emp) emp.style.display='none';
+  var row=document.createElement('div'); row.className='pod-row'; row.id='pod_row_'+id;
+  row.innerHTML='<span class="pod-row-num">#'+id+'</span>'+
+    '<button class="pod-del" onclick="delPodRow('+id+')">x</button>'+
+    '<div class="pod-row-fields">'+
+      '<input class="pod-inp" id="pod_toko_'+id+'" placeholder="Nama Toko / Outlet">'+
+      '<input class="pod-inp rp-inp" id="pod_jml_'+id+'" placeholder="cth: 5.000" type="number" oninput="calcPodTotal()">'+
+    '</div>'+
+    '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'+
+      '<span style="font-size:9px;color:var(--orange);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);padding:2px 6px;border-radius:6px;white-space:nowrap">ribuan Rp</span>'+
+    '</div>'+
+    '<input class="pod-inp" id="pod_ket_'+id+'" placeholder="Keterangan (opsional)" style="width:100%">';
+  list.appendChild(row);
+  updatePodCount();
+  document.getElementById('pod_toko_'+id).focus();
+}
+function delPodRow(id){
+  var row=document.getElementById('pod_row_'+id); if(row) row.remove();
+  calcPodTotal(); updatePodCount();
+  if(getPodData().length===0){ var emp=document.getElementById('podEmpty'); if(emp) emp.style.display=''; }
+}
+function calcPodTotal(){
+  var data=getPodData(), total=0;
+  data.forEach(function(d){ total+=parseFloat(d.jumlah)||0; });
+  var tot=document.getElementById('podTotal'), val=document.getElementById('podTotalVal');
+  if(data.length>0&&total>0){ tot.style.display='flex'; val.textContent='Rp '+fmtAngka(total); }
+  else tot.style.display='none';
+}
+function updatePodCount(){ document.getElementById('podCount').textContent=document.querySelectorAll('#podList .pod-row').length+' outlet'; calcPodTotal(); }
+function getPodData(){
+  var rows=document.querySelectorAll('#podList .pod-row'), result=[];
+  rows.forEach(function(row){
+    var m=row.id.match(/pod_row_(\d+)/); if(!m) return;
+    var id=m[1];
+    var toko=((document.getElementById('pod_toko_'+id)||{}).value||'').trim();
+    var jml=((document.getElementById('pod_jml_'+id)||{}).value||'').trim();
+    var ket=((document.getElementById('pod_ket_'+id)||{}).value||'').trim();
+    if(toko||jml) result.push({toko:toko,jumlah:jml,keterangan:ket});
+  });
+  return result;
+}
+function resetPod(){
+  podCounter=0;
+  document.querySelectorAll('#podList .pod-row').forEach(function(r){ r.remove(); });
+  var emp=document.getElementById('podEmpty'); if(emp) emp.style.display='';
+  document.getElementById('podCount').textContent='0 outlet';
+  document.getElementById('podTotal').style.display='none';
+}
+</script>
+</body>
+</html>

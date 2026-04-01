@@ -452,7 +452,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 </div>
 
 <script>
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbxP2cyYgmQtYBGUUPkVih2_jo-nQsrfEBatRreiBhLZfGTnhwf6OnyRZpb6IgyHG620ag/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbwk2LKBC9OpRDiVXc7_w2N8-NeBSY2l2sqAPlJwG-FCD82yUphy4vrKvVCY_knku0Cg/exec';
 
 var KODE      = ['S005','S016','S017','S018','S019','S120','S121']; // default, akan diganti dari GAS
 var HARI_NAMA = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -546,8 +546,8 @@ function setupForm(d){
 
   // ── HARI SIKLUS ──
   if(t && t.sales_hari_siklus && String(t.sales_hari_siklus).trim() !== ''){
-    // Sudah ada → kunci permanen
     var el = document.getElementById('sales_hari_siklus');
+    // Hari siklus TIDAK dalam ribuan - langsung tampil
     el.value = t.sales_hari_siklus;
     el.setAttribute('readonly','');
     el.classList.remove('wajib');
@@ -556,7 +556,6 @@ function setupForm(d){
     document.getElementById('hariSiklusStatus').textContent = 'Sudah terkunci';
     hariSiklusLocked = true;
   } else {
-    // Belum isi → wajib, highlight merah
     var el2 = document.getElementById('sales_hari_siklus');
     el2.classList.add('wajib');
     el2.removeAttribute('readonly');
@@ -569,7 +568,10 @@ function setupForm(d){
   // ── TARGET MONTH ──
   if(t && t.sales_tgt_month && String(t.sales_tgt_month).trim() !== ''){
     var tm = document.getElementById('sales_tgt_month');
-    tm.value = t.sales_tgt_month;
+    // Nilai di sheet tersimpan dalam Rupiah penuh → tampilkan dalam ribuan (÷1000)
+    var storedMonth = parseFloat(String(t.sales_tgt_month).replace(/[^0-9.]/g,''))||0;
+    // Deteksi: jika nilai > 10000 berarti tersimpan dalam Rupiah penuh, bagi 1000
+    tm.value = storedMonth > 10000 ? Math.round(storedMonth/1000) : storedMonth;
     tm.setAttribute('readonly','');
     tm.classList.remove('wajib'); tm.classList.add('locked');
     document.getElementById('lockTgtMonth').classList.remove('hidden');
@@ -592,11 +594,12 @@ function setupForm(d){
     }
   }
 
-  // ── TARGET YTD MONTH ── (sama seperti Target Month: sekali isi, terkunci, wajib isi)
+  // ── TARGET YTD MONTH ──
   var tgtYTDLocked = false;
   if(t && t.sales_tgt_ytd_month && String(t.sales_tgt_ytd_month).trim() !== ''){
     var ytdEl = document.getElementById('sales_tgt_ytd_month');
-    ytdEl.value = t.sales_tgt_ytd_month;
+    var storedYTD = parseFloat(String(t.sales_tgt_ytd_month).replace(/[^0-9.]/g,''))||0;
+    ytdEl.value = storedYTD > 10000 ? Math.round(storedYTD/1000) : storedYTD;
     ytdEl.setAttribute('readonly','');
     ytdEl.classList.remove('wajib'); ytdEl.classList.add('locked');
     document.getElementById('lockTgtYTD').classList.remove('hidden');
@@ -652,6 +655,7 @@ document.getElementById('sales_hari_siklus').addEventListener('blur', function()
 });
 
 function saveHariSiklus(val){
+  // Hari siklus TIDAK dikali 1000 - simpan langsung
   setLoader('Menyimpan Hari Siklus...');
   fetch(GAS_URL, {
     method:'POST',
@@ -659,9 +663,9 @@ function saveHariSiklus(val){
       action:'save_target_salesman',
       kode_salesman: pilihanKode,
       siklus: siklusAktif,
-      sales_hari_siklus: val,
-      sales_tgt_month: document.getElementById('sales_tgt_month').value || '',
-      sales_tgt_ytd_month: document.getElementById('sales_tgt_ytd_month').value || '',
+      sales_hari_siklus: val, // langsung, bukan ribuan
+      sales_tgt_month: String(parseFloat(document.getElementById('sales_tgt_month').value||0) * 1000),
+      sales_tgt_ytd_month: String(parseFloat(document.getElementById('sales_tgt_ytd_month').value||0) * 1000),
       od_target: ''
     })
   })
@@ -669,7 +673,6 @@ function saveHariSiklus(val){
   .then(function(d){
     hideLoader();
     if(d.ok || d.msg){
-      // Kunci hari siklus
       var el = document.getElementById('sales_hari_siklus');
       el.setAttribute('readonly','');
       el.classList.remove('wajib');
@@ -677,7 +680,6 @@ function saveHariSiklus(val){
       document.getElementById('lockHariSiklus').classList.remove('hidden');
       document.getElementById('hariSiklusStatus').textContent = 'Sudah terkunci';
       hariSiklusLocked = true;
-      // Hapus banner merah hari siklus
       var area = document.getElementById('bannerArea');
       var banners = area.querySelectorAll('.banner.red');
       banners.forEach(function(b){ b.remove(); });
@@ -706,6 +708,8 @@ document.getElementById('sales_tgt_ytd_month').addEventListener('blur', function
 });
 
 function saveTgtMonth(val){
+  // val dalam ribuan → simpan ke GAS dalam Rupiah penuh (×1000)
+  var valAsli = String(parseFloat(val) * 1000);
   setLoader('Menyimpan Target Month...');
   fetch(GAS_URL, {
     method:'POST',
@@ -713,8 +717,8 @@ function saveTgtMonth(val){
       action:'save_target_salesman',
       kode_salesman: pilihanKode,
       siklus: siklusAktif,
-      sales_tgt_month: val,
-      sales_tgt_ytd_month: document.getElementById('sales_tgt_ytd_month').value || '',
+      sales_tgt_month: valAsli,
+      sales_tgt_ytd_month: String(parseFloat(document.getElementById('sales_tgt_ytd_month').value||0) * 1000),
       sales_hari_siklus: document.getElementById('sales_hari_siklus').value || '',
       od_target: ''
     })
@@ -736,6 +740,8 @@ function saveTgtMonth(val){
 }
 
 function saveTgtYTDMonth(val){
+  // val dalam ribuan → simpan ke GAS dalam Rupiah penuh (×1000)
+  var valAsli = String(parseFloat(val) * 1000);
   setLoader('Menyimpan Target YTD Month...');
   fetch(GAS_URL, {
     method:'POST',
@@ -743,8 +749,8 @@ function saveTgtYTDMonth(val){
       action:'save_target_salesman',
       kode_salesman: pilihanKode,
       siklus: siklusAktif,
-      sales_tgt_month: document.getElementById('sales_tgt_month').value || '',
-      sales_tgt_ytd_month: val,
+      sales_tgt_month: String(parseFloat(document.getElementById('sales_tgt_month').value||0) * 1000),
+      sales_tgt_ytd_month: valAsli,
       sales_hari_siklus: document.getElementById('sales_hari_siklus').value || '',
       od_target: ''
     })
@@ -757,7 +763,6 @@ function saveTgtYTDMonth(val){
       el.setAttribute('readonly',''); el.classList.remove('wajib'); el.classList.add('locked');
       document.getElementById('lockTgtYTD').classList.remove('hidden');
       window._tgtYTDLocked = true;
-      // Hapus banner wajib YTD
       var area = document.getElementById('bannerArea');
       var bbs = area.querySelectorAll('.banner.blue');
       bbs.forEach(function(b){ if(b.textContent.indexOf('YTD')>-1) b.remove(); });

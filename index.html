@@ -452,7 +452,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 </div>
 
 <script>
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbwk2LKBC9OpRDiVXc7_w2N8-NeBSY2l2sqAPlJwG-FCD82yUphy4vrKvVCY_knku0Cg/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbyvbfh210ABCsH9VhKsUTKBSDH9_gM0uVty4io-sXDNFp75arP32T3eMW6LsK3Vc9zs/exec';
 
 var KODE      = ['S005','S016','S017','S018','S019','S120','S121']; // default, akan diganti dari GAS
 var HARI_NAMA = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -547,14 +547,27 @@ function setupForm(d){
   // ── HARI SIKLUS ──
   if(t && t.sales_hari_siklus && String(t.sales_hari_siklus).trim() !== ''){
     var el = document.getElementById('sales_hari_siklus');
-    // Hari siklus TIDAK dalam ribuan - langsung tampil
-    el.value = t.sales_hari_siklus;
-    el.setAttribute('readonly','');
-    el.classList.remove('wajib');
-    el.classList.add('locked');
-    document.getElementById('lockHariSiklus').classList.remove('hidden');
-    document.getElementById('hariSiklusStatus').textContent = 'Sudah terkunci';
-    hariSiklusLocked = true;
+    var hariVal = parseFloat(String(t.sales_hari_siklus).replace(/[^0-9.]/g,''))||0;
+    // Jika nilai tidak wajar (> 100) berarti data lama yang salah → reset
+    if(hariVal > 100){
+      // Nilai tidak wajar — jangan tampilkan, biarkan salesman isi ulang
+      el.value = '';
+      el.removeAttribute('readonly');
+      el.classList.add('wajib');
+      el.classList.remove('locked');
+      document.getElementById('lockHariSiklus').classList.add('hidden');
+      document.getElementById('hariSiklusStatus').textContent = 'WAJIB isi ulang';
+      hariSiklusLocked = false;
+      banners.push({type:'red', icon:'🔴', msg:'<strong>Hari Siklus perlu diisi ulang</strong> (data lama tidak valid). Isi jumlah hari siklus yang benar.'});
+    } else {
+      el.value = hariVal;
+      el.setAttribute('readonly','');
+      el.classList.remove('wajib');
+      el.classList.add('locked');
+      document.getElementById('lockHariSiklus').classList.remove('hidden');
+      document.getElementById('hariSiklusStatus').textContent = 'Sudah terkunci';
+      hariSiklusLocked = true;
+    }
   } else {
     var el2 = document.getElementById('sales_hari_siklus');
     el2.classList.add('wajib');
@@ -582,15 +595,17 @@ function setupForm(d){
     var tm2 = document.getElementById('sales_tgt_month');
     tm2.removeAttribute('readonly'); tm2.classList.remove('locked');
     document.getElementById('lockTgtMonth').classList.add('hidden');
-    var sisaHari = Math.max(0, 7 - hariKeSiklus);
-    if(hariKeSiklus > 7){
+    // Blokir hanya jika benar-benar sudah lewat 7 hari (bukan 0 = belum ada siklus)
+    var lewatBatas = hariKeSiklus > 7 && hariKeSiklus < 900;
+    var sisaHari = lewatBatas ? 0 : Math.max(0, 7 - hariKeSiklus);
+    if(lewatBatas){
       document.getElementById('tgtMonthStatus').textContent = 'Batas telah lewat';
-      tm2.setAttribute('readonly','');
-      banners.push({type:'orange', icon:'⚠️', msg:'Batas pengisian Target Month sudah lewat. Laporan tetap bisa dikirim.'});
+      // TIDAK dikunci — tetap bisa isi walau lewat batas (hanya peringatan)
+      banners.push({type:'orange', icon:'⚠️', msg:'Batas 7 hari sudah lewat, tapi Anda masih bisa mengisi Target Month.'});
     } else {
-      document.getElementById('tgtMonthStatus').textContent = 'Isi dalam '+sisaHari+' hari';
-      if(sisaHari <= 3) banners.push({type:'orange', icon:'⚠️', msg:'<strong>Segera isi Target Month!</strong> Batas dalam '+sisaHari+' hari lagi.'});
-      else banners.push({type:'blue', icon:'📝', msg:'Isi Target Month untuk siklus ini (sisa '+sisaHari+' hari).'});
+      document.getElementById('tgtMonthStatus').textContent = hariKeSiklus > 0 ? 'Isi dalam '+sisaHari+' hari' : 'Wajib isi';
+      if(sisaHari > 0 && sisaHari <= 3) banners.push({type:'orange', icon:'⚠️', msg:'<strong>Segera isi Target Month!</strong> Batas dalam '+sisaHari+' hari lagi.'});
+      else banners.push({type:'blue', icon:'📝', msg:'Isi Target Month untuk siklus ini.'});
     }
   }
 
@@ -609,12 +624,13 @@ function setupForm(d){
     ytdEl2.removeAttribute('readonly'); ytdEl2.classList.remove('locked');
     ytdEl2.classList.add('wajib');
     document.getElementById('lockTgtYTD').classList.add('hidden');
-    if(hariKeSiklus > 7){
-      ytdEl2.setAttribute('readonly','');
-      banners.push({type:'orange', icon:'⚠️', msg:'Batas pengisian Target YTD Month sudah lewat.'});
+    var lewatBatasYTD = hariKeSiklus > 7 && hariKeSiklus < 900;
+    if(lewatBatasYTD){
+      // Tetap bisa isi, hanya peringatan
+      banners.push({type:'orange', icon:'⚠️', msg:'Batas 7 hari lewat, masih bisa isi Target YTD Month.'});
     } else {
-      var sisaYTD = Math.max(0, 7 - hariKeSiklus);
-      banners.push({type:'blue', icon:'📋', msg:'Isi <strong>Target YTD Month</strong> untuk siklus ini (batas '+sisaYTD+' hari).'});
+      var sisaYTD = hariKeSiklus > 0 ? Math.max(0, 7 - hariKeSiklus) : 7;
+      banners.push({type:'blue', icon:'📋', msg:'Isi <strong>Target YTD Month</strong> untuk siklus ini.'});
     }
   }
   window._tgtYTDLocked = tgtYTDLocked;
@@ -692,7 +708,7 @@ function saveHariSiklus(val){
 // Saat target month diisi dan blur → simpan ke GAS dan kunci
 document.getElementById('sales_tgt_month').addEventListener('blur', function(){
   if(tgtMonthLocked) return;
-  if(hariKeSiklus > 7) return;
+  // Hapus pembatasan hariKeSiklus > 7 — selalu boleh isi jika belum terkunci
   var val = this.value.trim();
   if(!val || isNaN(val) || parseFloat(val) <= 0) return;
   saveTgtMonth(val);
@@ -701,7 +717,6 @@ document.getElementById('sales_tgt_month').addEventListener('blur', function(){
 // Saat target YTD month diisi dan blur → simpan ke GAS dan kunci
 document.getElementById('sales_tgt_ytd_month').addEventListener('blur', function(){
   if(window._tgtYTDLocked) return;
-  if(hariKeSiklus > 7) return;
   var val = this.value.trim();
   if(!val || isNaN(val) || parseFloat(val) <= 0) return;
   saveTgtYTDMonth(val);

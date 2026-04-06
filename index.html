@@ -447,12 +447,40 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
     <div class="suc-ico">✅</div>
     <h2>Laporan Terkirim!</h2>
     <p>Data berhasil tersimpan.<br>Terima kasih 🙏</p>
-    <button class="btn-again" onclick="ulang()">+ Laporan Baru</button>
+
+    <!-- Tombol Generate WA -->
+    <button onclick="genWASalesman()"
+      style="display:block;width:100%;margin-top:16px;padding:13px;
+        background:linear-gradient(135deg,#1a7f37,#22c55e);color:#fff;border:none;
+        border-radius:12px;font-family:var(--font);font-size:13px;font-weight:700;
+        cursor:pointer;letter-spacing:.5px">
+      📋 Generate Laporan WA
+    </button>
+
+    <!-- Preview WA -->
+    <div id="waPreviewSalesman" style="display:none;margin-top:14px;
+      background:var(--card2);border:1px solid var(--border);border-radius:12px;
+      overflow:hidden;text-align:left">
+      <div style="display:flex;justify-content:space-between;align-items:center;
+        padding:10px 14px;border-bottom:1px solid var(--border)">
+        <span style="font-size:11px;font-weight:600;color:var(--muted2)">📋 Preview Teks WA</span>
+        <button onclick="copyWASalesman()"
+          style="padding:5px 12px;background:var(--card);border:1px solid var(--border);
+            border-radius:7px;font-family:var(--font);font-size:10px;font-weight:700;
+            color:var(--text);cursor:pointer">Copy</button>
+      </div>
+      <div id="waTeksSalesman"
+        style="padding:14px;font-family:'Courier New',monospace;font-size:11px;
+          line-height:1.9;white-space:pre-wrap;word-break:break-word;
+          max-height:320px;overflow-y:auto;color:var(--text)"></div>
+    </div>
+
+    <button class="btn-again" onclick="ulang()" style="margin-top:14px">+ Laporan Baru</button>
   </div>
 </div>
 
 <script>
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbzhVLh55nq9NvUH256425nALzXLUXeE4xld0-Sy9pvaZzd_EqVJADnapHfzV6gCN05Y/exec';
+var GAS_URL = 'GANTI_URL_GOOGLE_APPS_SCRIPT_DISINI';
 
 var KODE      = ['S005','S016','S017','S018','S019','S120','S121']; // default, akan diganti dari GAS
 var HARI_NAMA = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -972,6 +1000,7 @@ function submitForm(){
     .then(function(d){
       hideLoader();
       if(d.ok){
+        lastPayload = payload; // simpan untuk generate WA
         document.getElementById('stepForm').classList.remove('show');
         document.getElementById('stepOk').classList.add('show');
         document.getElementById('d2').classList.replace('active','done');
@@ -988,6 +1017,9 @@ function ulang(){
   document.getElementById('d2').classList.remove('done');
   document.getElementById('d2').classList.add('active');
   document.getElementById('btnSubmit').disabled=false; document.getElementById('btnSubmit').style.opacity='';
+  // Reset WA preview
+  document.getElementById('waPreviewSalesman').style.display='none';
+  document.getElementById('waTeksSalesman').textContent='';
   ['ec_callday','ec_callmtd','ec_hi_tk','ec_hi_pct','ec_mtd_tk','ec_mtd_pct',
    'item_total_hi','item_total_mtd','item_hi_val','item_hi_info','item_mtd_val','item_mtd_info',
    'sales_hi_val','sales_hi_pct','sales_mtd_val','sales_mtd_pct','sales_ytd_val','sales_ytd_pct',
@@ -997,6 +1029,99 @@ function ulang(){
   ['stEC','stItem','stSales','stOD'].forEach(function(id){ var s=document.getElementById(id); s.textContent=''; s.className='sec-status'; });
   document.getElementById('valSummary').className='val-summary'; document.getElementById('valSummary').innerHTML='';
   resetPod(); calcOD();
+}
+
+// ── GENERATE WA SALESMAN ──
+var lastPayload = null; // simpan payload terakhir untuk generate WA
+
+function genWASalesman(){
+  if(!lastPayload){ alert('Data laporan tidak ditemukan.'); return; }
+  var p = lastPayload;
+  var now = new Date();
+  var tgl = p.tanggal || now.toISOString().split('T')[0];
+  var hariArr = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  var dt  = new Date(tgl+'T00:00:00');
+  var tglS = hariArr[dt.getDay()]+', '+dt.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+
+  // Hitung % untuk WA
+  var ecTgt    = parseFloat(p.ec_target)||26;
+  var ecHiPct  = ecTgt>0 ? ((parseFloat(p.ec_hi_tk)||0)/ecTgt*100).toFixed(1)+'%' : '-';
+  var ecMTDPct = ecTgt>0 ? ((parseFloat(p.ec_mtd_tk)||0)/ecTgt*100).toFixed(1)+'%' : '-';
+  var tgtMonth = parseFloat(p.sales_tgt_month)||0;
+  var tgtDay   = parseFloat(p.sales_tgt_day)||0;
+  var tgtYTD   = parseFloat(p.sales_tgt_ytd_month)||0;
+  var sHi      = parseFloat(p.sales_hi_val)||0;
+  var sMTD     = parseFloat(p.sales_mtd_val)||0;
+  var sYTD     = parseFloat(p.sales_ytd_val)||0;
+  var sHiPct   = tgtDay>0   ? (sHi/tgtDay*100).toFixed(1)+'%'   : p.sales_hi_pct  || '-';
+  var sMTDPct  = tgtMonth>0 ? (sMTD/tgtMonth*100).toFixed(1)+'%': p.sales_mtd_pct || '-';
+  var sYTDPct  = tgtYTD>0   ? (sYTD/tgtYTD*100).toFixed(1)+'%'  : p.sales_ytd_pct || '-';
+  var odTgt    = parseFloat(p.od_target)||0;
+  var odReal   = parseFloat(p.od_realisasi)||0;
+  var odVal    = odTgt>0 ? Math.max(0,odTgt-odReal) : (parseFloat(p.od_value)||0);
+  var collPct  = odTgt>0 ? (odReal/odTgt*100).toFixed(1)+'%' : p.od_collection||'-';
+  var odPct    = odTgt>0 ? (odVal/odTgt*100).toFixed(1)+'%'  : p.od_overdue||'-';
+
+  // Format angka Rupiah
+  function fR(v){ return 'Rp '+Math.round(parseFloat(v)||0).toLocaleString('id-ID'); }
+
+  // POD outlets
+  var podLines = '';
+  if(p.pod_outlets && p.pod_outlets.length > 0){
+    podLines = '\n\n*POD — Outlet Tidak Bayar*';
+    p.pod_outlets.forEach(function(pod,i){
+      podLines += '\n   '+(i+1)+'. '+pod.toko+' : '+fR(pod.jumlah);
+      if(pod.keterangan) podLines += ' ('+pod.keterangan+')';
+    });
+  }
+
+  var teks =
+    '*Laporan Produktivitas, Sales & Collection OD*\n'+
+    'Kode Salesman : '+pilihanKode+'\n'+
+    'Tanggal : '+tglS+'\n'+
+    'Siklus : '+(siklusAktif||'-')+'\n\n'+
+    '➫ *EC*\n'+
+    '   Target     : '+ecTgt+' Tk / >85%\n'+
+    '   Call Day   : '+(p.ec_callday||'-')+' Tk\n'+
+    '   Call MTD   : '+(p.ec_callmtd||'-')+' Tk\n'+
+    '   EC Hi      : '+(p.ec_hi_tk||'-')+' Tk / '+ecHiPct+'\n'+
+    '   EC MTD     : '+(p.ec_mtd_tk||'-')+' Tk / '+ecMTDPct+'\n\n'+
+    '➫ *ITEM*\n'+
+    '   Target     : '+(p.item_target||8)+' Itm\n'+
+    '   Item Hi    : '+(p.item_hi_val||'-')+' ('+( p.item_hi_info||'-')+')\n'+
+    '   Item MTD   : '+(p.item_mtd_val||'-')+' ('+( p.item_mtd_info||'-')+')\n\n'+
+    '➫ *SALES*\n'+
+    '   Target Month   : '+fR(tgtMonth)+'\n'+
+    '   Target YTD     : '+fR(tgtYTD)+'\n'+
+    '   Target Day     : '+fR(tgtDay)+'\n'+
+    '   Sales Hi       : '+fR(sHi)+' / '+sHiPct+'\n'+
+    '   Sales MTD      : '+fR(sMTD)+' / '+sMTDPct+'\n'+
+    '   Growth YTD     : '+fR(sYTD)+' / '+sYTDPct+'\n\n'+
+    '➫ *OD / COLLECTION*\n'+
+    '   Target Coll/EAR : '+fR(odTgt)+'\n'+
+    '   Realisasi/CD    : '+fR(odReal)+'\n'+
+    '   Collection      : '+collPct+'\n'+
+    '   OD in Value     : '+fR(odVal)+'\n'+
+    '   Over Due        : '+odPct+
+    podLines+'\n\n'+
+    '_Terimakasih_ 🙏';
+
+  document.getElementById('waTeksSalesman').textContent = teks;
+  document.getElementById('waPreviewSalesman').style.display = 'block';
+  window._waTextSalesman = teks;
+}
+
+function copyWASalesman(){
+  var teks = window._waTextSalesman || '';
+  if(!teks) return;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(teks).then(function(){ alert('✓ Teks disalin!'); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = teks; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    alert('✓ Teks disalin!');
+  }
 }
 
 // ── POD ──

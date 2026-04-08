@@ -187,6 +187,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
   border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--font)}
 .form-wrap{display:none}.form-wrap.show{display:block}
 .hidden{display:none!important}
+
+/* PIN STYLES */
+.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--border);
+  background:transparent;transition:all .15s}
+.pin-dot.filled{background:var(--accent);border-color:var(--accent)}
+.pin-dot.error{background:var(--red);border-color:var(--red)}
+.pin-btn{padding:16px;background:var(--card2);border:1.5px solid var(--border);
+  border-radius:12px;font-family:var(--font);font-size:18px;font-weight:700;
+  color:var(--text);cursor:pointer;transition:all .15s;text-align:center}
+.pin-btn:active{background:var(--accent);color:#fff;border-color:var(--accent);
+  transform:scale(.95)}
 </style>
 </head>
 <body>
@@ -215,7 +226,71 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
       <h2>Pilih Kode Salesman</h2>
       <p>Pilih kode Anda untuk mengisi laporan hari ini</p>
       <div class="kode-grid" id="kodeGrid"></div>
-      <button class="btn-main btn-blue" id="btnLanjut" disabled onclick="goForm()">Lanjut →</button>
+      <button class="btn-main btn-blue" id="btnLanjut" disabled onclick="goPin()">Lanjut →</button>
+    </div>
+  </div>
+
+  <!-- STEP PIN -->
+  <div id="stepPin" class="hidden">
+    <div class="select-card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">
+        <span style="background:var(--accent);color:#fff;font-size:14px;font-weight:800;
+          padding:6px 16px;border-radius:8px;letter-spacing:1px" id="pinBadgeKode">—</span>
+        <button onclick="backDariPin()"
+          style="font-size:11px;color:var(--muted2);cursor:pointer;padding:6px 10px;
+            border-radius:8px;border:1px solid var(--border);background:transparent;font-family:var(--font)">
+          ← Ganti Kode</button>
+      </div>
+      <h2 style="font-size:16px;font-weight:700;margin-bottom:6px">Masukkan PIN</h2>
+      <p style="font-size:12px;color:var(--muted2);margin-bottom:20px">
+        PIN 4 angka untuk kode <span id="pinKodeLabel" style="color:var(--accent);font-weight:700"></span></p>
+      <!-- PIN dots -->
+      <div style="display:flex;justify-content:center;gap:14px;margin-bottom:24px">
+        <div class="pin-dot" id="dot0"></div>
+        <div class="pin-dot" id="dot1"></div>
+        <div class="pin-dot" id="dot2"></div>
+        <div class="pin-dot" id="dot3"></div>
+      </div>
+      <!-- Numpad -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:280px;margin:0 auto 16px">
+        <button class="pin-btn" onclick="pinInput('1')">1</button>
+        <button class="pin-btn" onclick="pinInput('2')">2</button>
+        <button class="pin-btn" onclick="pinInput('3')">3</button>
+        <button class="pin-btn" onclick="pinInput('4')">4</button>
+        <button class="pin-btn" onclick="pinInput('5')">5</button>
+        <button class="pin-btn" onclick="pinInput('6')">6</button>
+        <button class="pin-btn" onclick="pinInput('7')">7</button>
+        <button class="pin-btn" onclick="pinInput('8')">8</button>
+        <button class="pin-btn" onclick="pinInput('9')">9</button>
+        <button class="pin-btn" onclick="pinClear()" style="font-size:11px;color:var(--red)">⌫ Hapus</button>
+        <button class="pin-btn" onclick="pinInput('0')">0</button>
+        <button class="pin-btn" onclick="pinSubmit()"
+          style="background:var(--accent);color:#fff;font-weight:800">OK ✓</button>
+      </div>
+      <div class="err-msg" id="errPin" style="text-align:center">PIN salah. Coba lagi.</div>
+      <!-- Ganti PIN toggle -->
+      <button onclick="toggleGantiPin()"
+        style="width:100%;margin-top:12px;padding:9px;background:transparent;
+          border:1px dashed var(--border);border-radius:8px;font-family:var(--font);
+          font-size:11px;color:var(--muted2);cursor:pointer">🔑 Ganti PIN Saya</button>
+      <div id="gantiPinWrap" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:.5px;
+          text-transform:uppercase;margin-bottom:8px">Ganti PIN Saya</div>
+        <input type="password" inputmode="numeric" maxlength="4" id="gpLama"
+          placeholder="PIN lama (4 angka)"
+          style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;
+            padding:9px 12px;color:var(--text);font-family:var(--font);font-size:14px;
+            font-weight:700;outline:none;text-align:center;letter-spacing:4px;margin-bottom:8px">
+        <input type="password" inputmode="numeric" maxlength="4" id="gpBaru"
+          placeholder="PIN baru (4 angka)"
+          style="width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;
+            padding:9px 12px;color:var(--text);font-family:var(--font);font-size:14px;
+            font-weight:700;outline:none;text-align:center;letter-spacing:4px;margin-bottom:8px">
+        <button onclick="doGantiPin()"
+          style="width:100%;padding:10px;background:var(--orange);color:#000;border:none;
+            border-radius:8px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer">
+          💾 Simpan PIN Baru</button>
+      </div>
     </div>
   </div>
 
@@ -225,6 +300,62 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
       <span class="kode-chip" id="badgeKode">—</span>
       <button class="change-btn" onclick="backPilih()">← Ganti Kode</button>
     </div>
+
+    <!-- Tab navigasi -->
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button id="tabLaporan" onclick="switchSalesmanTab('laporan')"
+        style="flex:1;padding:9px;border-radius:9px;font-family:var(--font);font-size:11px;
+          font-weight:700;cursor:pointer;border:1.5px solid var(--accent);
+          background:var(--accent);color:#fff;transition:all .2s">
+        📝 Isi Laporan
+      </button>
+      <button id="tabRiwayat" onclick="switchSalesmanTab('riwayat')"
+        style="flex:1;padding:9px;border-radius:9px;font-family:var(--font);font-size:11px;
+          font-weight:700;cursor:pointer;border:1.5px solid var(--border);
+          background:var(--card2);color:var(--muted2);transition:all .2s">
+        📜 Riwayat
+      </button>
+    </div>
+
+    <!-- PANEL RIWAYAT -->
+    <div id="panelRiwayat" class="hidden">
+      <!-- Filter tanggal -->
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;
+        padding:14px;margin-bottom:10px">
+        <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted2);
+          text-transform:uppercase;margin-bottom:10px">Filter Tanggal</div>
+        <div style="display:flex;gap:6px;margin-bottom:8px">
+          <div style="flex:1">
+            <div style="font-size:9px;color:var(--muted2);margin-bottom:4px">Dari</div>
+            <input type="date" id="rwDari"
+              style="width:100%;background:var(--bg);border:1.5px solid var(--border);
+                border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--font);
+                font-size:12px;outline:none">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:9px;color:var(--muted2);margin-bottom:4px">Sampai</div>
+            <input type="date" id="rwSampai"
+              style="width:100%;background:var(--bg);border:1.5px solid var(--border);
+                border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--font);
+                font-size:12px;outline:none">
+          </div>
+        </div>
+        <button onclick="loadRiwayat()"
+          style="width:100%;padding:10px;background:var(--accent);color:#fff;border:none;
+            border-radius:8px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer">
+          🔍 Tampilkan Riwayat
+        </button>
+      </div>
+      <!-- List riwayat -->
+      <div id="riwayatList">
+        <div style="text-align:center;padding:20px;font-size:12px;color:var(--muted2)">
+          Pilih tanggal lalu tap Tampilkan
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL LAPORAN (existing form) -->
+    <div id="panelLaporan">
 
     <div class="siklus-bar">
       <span>📅</span>
@@ -440,6 +571,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
     <div class="err-msg" id="errForm">Isi Tanggal terlebih dahulu</div>
     <button class="btn-main btn-green" id="btnSubmit" onclick="submitForm()">✓ Kirim Laporan</button>
     <button class="btn-ghost" onclick="backPilih()">← Kembali Pilih Kode</button>
+  </div><!-- end panelLaporan -->
   </div>
 
   <!-- STEP 3 -->
@@ -482,7 +614,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 <script>
 var GAS_URL = 'https://script.google.com/macros/s/AKfycbzhVLh55nq9NvUH256425nALzXLUXeE4xld0-Sy9pvaZzd_EqVJADnapHfzV6gCN05Y/exec';
 
-var KODE      = ['S005','S016','S017','S018','S019','S120','S121']; // default, akan diganti dari GAS
+var KODE      = ['S005','S016','S017','S018','S019','S120','S121'];
 var HARI_NAMA = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
 var pilihanKode      = null;
@@ -492,6 +624,7 @@ var hariSiklusLocked = false;
 var tgtMonthLocked   = false;
 var hariKeSiklus     = 0;
 var podCounter       = 0;
+var pinBuffer        = ''; // buffer PIN yang diketik
 
 // INIT
 (function(){
@@ -543,6 +676,109 @@ function pilihKode(k){
   pilihanKode = k;
   document.querySelectorAll('.kode-btn').forEach(function(b){ b.classList.toggle('sel', b.textContent===k); });
   document.getElementById('btnLanjut').disabled = false;
+}
+
+// ── PIN FLOW ──
+function goPin(){
+  if(!pilihanKode) return;
+  document.getElementById('stepPilih').classList.add('hidden');
+  document.getElementById('stepPin').classList.remove('hidden');
+  document.getElementById('pinBadgeKode').textContent = pilihanKode;
+  document.getElementById('pinKodeLabel').textContent = pilihanKode;
+  document.getElementById('d1').classList.replace('active','done');
+  document.getElementById('d2').classList.add('active');
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('errPin').classList.remove('show');
+}
+
+function backDariPin(){
+  document.getElementById('stepPin').classList.add('hidden');
+  document.getElementById('stepPilih').classList.remove('hidden');
+  document.querySelectorAll('.kode-btn').forEach(function(b){ b.classList.remove('sel'); });
+  pilihanKode = null;
+  document.getElementById('btnLanjut').disabled = true;
+  document.getElementById('d2').classList.remove('active');
+  document.getElementById('d1').classList.replace('done','active');
+  pinBuffer = '';
+}
+
+function pinInput(digit){
+  if(pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  updatePinDots();
+  if(pinBuffer.length === 4) setTimeout(pinSubmit, 200);
+}
+
+function pinClear(){
+  pinBuffer = pinBuffer.slice(0,-1);
+  updatePinDots();
+}
+
+function updatePinDots(){
+  for(var i=0;i<4;i++){
+    var dot = document.getElementById('dot'+i);
+    dot.classList.toggle('filled', i < pinBuffer.length);
+    dot.classList.remove('error');
+  }
+}
+
+function pinShake(){
+  for(var i=0;i<4;i++) document.getElementById('dot'+i).classList.add('error');
+  setTimeout(function(){ pinBuffer=''; updatePinDots(); },800);
+}
+
+function pinSubmit(){
+  if(pinBuffer.length < 4){ alert('Masukkan 4 angka PIN'); return; }
+  setLoader('Verifikasi PIN...');
+  fetch(GAS_URL, {
+    method:'POST',
+    body: JSON.stringify({ action:'verify_pin', kode:pilihanKode, pin:pinBuffer })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    hideLoader();
+    if(d.ok){
+      // PIN benar → lanjut ke form
+      document.getElementById('stepPin').classList.add('hidden');
+      goForm();
+    } else {
+      pinShake();
+      var err = document.getElementById('errPin');
+      err.classList.add('show');
+      setTimeout(function(){ err.classList.remove('show'); },2000);
+    }
+  })
+  .catch(function(){ hideLoader(); alert('Koneksi gagal. Coba lagi.'); pinBuffer=''; updatePinDots(); });
+}
+
+function toggleGantiPin(){
+  var w = document.getElementById('gantiPinWrap');
+  w.style.display = w.style.display==='none' ? 'block' : 'none';
+}
+
+function doGantiPin(){
+  var pinLama = document.getElementById('gpLama').value.trim();
+  var pinBaru = document.getElementById('gpBaru').value.trim();
+  if(pinLama.length!==4||isNaN(pinLama)||pinBaru.length!==4||isNaN(pinBaru)){
+    alert('PIN harus 4 angka'); return;
+  }
+  setLoader('Menyimpan PIN baru...');
+  fetch(GAS_URL, {
+    method:'POST',
+    body: JSON.stringify({ action:'ganti_pin', kode:pilihanKode, pin_lama:pinLama, pin_baru:pinBaru })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    hideLoader();
+    if(d.ok){
+      alert('✓ PIN berhasil diganti!');
+      document.getElementById('gpLama').value='';
+      document.getElementById('gpBaru').value='';
+      document.getElementById('gantiPinWrap').style.display='none';
+    } else { alert('Gagal: '+d.msg); }
+  })
+  .catch(function(){ hideLoader(); alert('Koneksi gagal'); });
 }
 
 function goForm(){
@@ -1045,8 +1281,14 @@ function genWASalesman(){
 
   // Hitung % untuk WA
   var ecTgt    = parseFloat(p.ec_target)||26;
-  var ecHiPct  = ecTgt>0 ? ((parseFloat(p.ec_hi_tk)||0)/ecTgt*100).toFixed(1)+'%' : '-';
-  var ecMTDPct = ecTgt>0 ? ((parseFloat(p.ec_mtd_tk)||0)/ecTgt*100).toFixed(1)+'%' : '-';
+  var ecHi     = parseFloat(p.ec_hi_tk)||0;
+  var ecMTD    = parseFloat(p.ec_mtd_tk)||0;
+  var callDay  = parseFloat(p.ec_callday)||0;
+  var callMTD  = parseFloat(p.ec_callmtd)||0;
+  // EC Hi%  = EC Hi  ÷ Call Day  (bukan ÷ Target)
+  // EC MTD% = EC MTD ÷ Call MTD  (bukan ÷ Target)
+  var ecHiPct  = callDay>0  ? (ecHi /callDay *100).toFixed(1)+'%' : '-';
+  var ecMTDPct = callMTD>0  ? (ecMTD/callMTD*100).toFixed(1)+'%' : '-';
   var tgtMonth = parseFloat(p.sales_tgt_month)||0;
   var tgtDay   = parseFloat(p.sales_tgt_day)||0;
   var tgtYTD   = parseFloat(p.sales_tgt_ytd_month)||0;
@@ -1124,7 +1366,92 @@ function copyWASalesman(){
   }
 }
 
-// ── POD ──
+// ── SALESMAN TAB SWITCH ──
+function switchSalesmanTab(tab){
+  var isRiwayat = tab === 'riwayat';
+  document.getElementById('panelRiwayat').classList.toggle('hidden', !isRiwayat);
+  document.getElementById('panelLaporan').classList.toggle('hidden', isRiwayat);
+  var btnL = document.getElementById('tabLaporan');
+  var btnR = document.getElementById('tabRiwayat');
+  if(isRiwayat){
+    btnR.style.background='var(--accent)'; btnR.style.color='#fff'; btnR.style.borderColor='var(--accent)';
+    btnL.style.background='var(--card2)'; btnL.style.color='var(--muted2)'; btnL.style.borderColor='var(--border)';
+    // Set default tanggal hari ini dan 7 hari lalu
+    var now = new Date();
+    var tujuhHariLalu = new Date(now); tujuhHariLalu.setDate(now.getDate()-7);
+    document.getElementById('rwSampai').value = now.toISOString().split('T')[0];
+    document.getElementById('rwDari').value   = tujuhHariLalu.toISOString().split('T')[0];
+  } else {
+    btnL.style.background='var(--accent)'; btnL.style.color='#fff'; btnL.style.borderColor='var(--accent)';
+    btnR.style.background='var(--card2)'; btnR.style.color='var(--muted2)'; btnR.style.borderColor='var(--border)';
+  }
+}
+
+// ── LOAD RIWAYAT SALESMAN ──
+function loadRiwayat(){
+  var dari   = document.getElementById('rwDari').value;
+  var sampai = document.getElementById('rwSampai').value;
+  if(!dari||!sampai){ alert('Isi tanggal dari dan sampai'); return; }
+  var wrap = document.getElementById('riwayatList');
+  wrap.innerHTML = '<div style="text-align:center;padding:20px"><span class="spin-sm"></span>'+
+    '<span style="color:var(--muted2);font-size:12px;margin-left:6px">Memuat...</span></div>';
+  fetch(GAS_URL+'?action=get_riwayat_salesman&kode='+pilihanKode+
+    '&tgl_dari='+dari+'&tgl_sampai='+sampai)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if(!d.ok){ wrap.innerHTML='<div style="text-align:center;padding:16px;color:var(--red);font-size:12px">'+d.msg+'</div>'; return; }
+      renderRiwayat(d.data||[]);
+    })
+    .catch(function(){ wrap.innerHTML='<div style="text-align:center;padding:16px;color:var(--red);font-size:12px">Koneksi gagal</div>'; });
+}
+
+function renderRiwayat(data){
+  var wrap = document.getElementById('riwayatList');
+  if(!data.length){
+    wrap.innerHTML='<div style="text-align:center;padding:24px"><div style="font-size:32px">📭</div>'+
+      '<div style="font-size:12px;color:var(--muted2);margin-top:8px">Tidak ada laporan di rentang ini</div></div>';
+    return;
+  }
+  var html = '<div style="font-size:11px;color:var(--muted2);margin-bottom:8px">'+
+    data.length+' laporan ditemukan (terbaru dulu)</div>';
+  data.forEach(function(r){
+    var tgl = (r['Tanggal']||r['Timestamp']||'').substring(0,10);
+    var hari = r['Hari']||'';
+    var sHi  = parseFloat(r['Sales Hi Val']||0).toLocaleString('id-ID');
+    var sMTD = parseFloat(r['Sales MTD Val']||0).toLocaleString('id-ID');
+    var coll = r['OD Collection %']||r['OD collection']||'-';
+    var ecHi = r['EC Hi Tk']||'-';
+    var ecMTD= r['EC MTD Tk']||'-';
+    html +=
+      '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;'+
+        'padding:12px 14px;margin-bottom:8px">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+          '<span style="font-size:12px;font-weight:700;color:var(--text)">'+hari+', '+tgl+'</span>'+
+          '<span style="font-size:10px;color:var(--green);background:rgba(34,197,94,.1);'+
+            'padding:2px 8px;border-radius:6px;font-weight:700">✓ Terkirim</span>'+
+        '</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+
+          '<div style="background:var(--card2);border-radius:7px;padding:7px 10px">'+
+            '<div style="font-size:9px;color:var(--muted2);font-weight:700;letter-spacing:.5px">EC HI / MTD</div>'+
+            '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-top:2px">'+ecHi+' / '+ecMTD+' Tk</div>'+
+          '</div>'+
+          '<div style="background:var(--card2);border-radius:7px;padding:7px 10px">'+
+            '<div style="font-size:9px;color:var(--muted2);font-weight:700;letter-spacing:.5px">COLLECTION</div>'+
+            '<div style="font-size:12px;font-weight:700;color:var(--green);margin-top:2px">'+coll+'</div>'+
+          '</div>'+
+          '<div style="background:var(--card2);border-radius:7px;padding:7px 10px">'+
+            '<div style="font-size:9px;color:var(--muted2);font-weight:700;letter-spacing:.5px">SALES HI</div>'+
+            '<div style="font-size:12px;font-weight:700;color:var(--orange);margin-top:2px">Rp '+sHi+'</div>'+
+          '</div>'+
+          '<div style="background:var(--card2);border-radius:7px;padding:7px 10px">'+
+            '<div style="font-size:9px;color:var(--muted2);font-weight:700;letter-spacing:.5px">SALES MTD</div>'+
+            '<div style="font-size:12px;font-weight:700;color:var(--orange);margin-top:2px">Rp '+sMTD+'</div>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+  });
+  wrap.innerHTML = html;
+}
 function addPodRow(){
   podCounter++;
   var id=podCounter, list=document.getElementById('podList'), emp=document.getElementById('podEmpty');

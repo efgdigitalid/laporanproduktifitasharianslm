@@ -612,7 +612,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 </div>
 
 <script>
-var GAS_URL = 'https://script.google.com/macros/s/AKfycby_qQcB-rVZ6qiW0l-zSTGPW2_JPPQAACAEOIIZH-298hCWm1GgW6LqufE-4arwUbTc/exec';
+var GAS_URL = 'GANTI_URL_GOOGLE_APPS_SCRIPT_DISINI';
 
 var KODE      = ['S005','S016','S017','S018','S019','S120','S121'];
 var HARI_NAMA = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -640,7 +640,10 @@ function fetchKodeList(){
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.ok && d.list && d.list.length > 0){
-        KODE = d.list;
+        // Handle object {kode, has_pin} atau string langsung
+        KODE = d.list.map(function(item){
+          return typeof item === 'object' ? item.kode : item;
+        });
       }
       buildKodeGrid();
     })
@@ -652,7 +655,9 @@ function fetchKodeList(){
 function buildKodeGrid(){
   var grid = document.getElementById('kodeGrid');
   grid.innerHTML = '';
-  KODE.forEach(function(k){
+  KODE.forEach(function(item){
+    // Handle both string dan object {kode, has_pin}
+    var k = typeof item === 'object' ? item.kode : item;
     var b = document.createElement('button');
     b.className='kode-btn'; b.textContent=k;
     b.onclick=function(){ pilihKode(k); };

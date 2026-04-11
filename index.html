@@ -642,7 +642,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 </div>
 
 <script>
-var https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec = 'https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec';
 
 var KODE      = ['S005','S016','S017','S018','S019','S120','S121'];
 var HARI_NAMA = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -666,7 +666,7 @@ var pinBuffer        = ''; // buffer PIN yang diketik
 })();
 
 function fetchKodeList(){
-  fetch(https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec+'?action=get_salesman_list')
+  fetch(GAS_URL+'?action=get_salesman_list')
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.ok && d.list && d.list.length > 0){
@@ -696,7 +696,7 @@ function buildKodeGrid(){
 }
 
 function fetchSiklus(){
-  fetch(https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec+'?action=get_siklus')
+  fetch(GAS_URL+'?action=get_siklus')
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.ok){
@@ -774,7 +774,7 @@ function pinShake(){
 function pinSubmit(){
   if(pinBuffer.length < 4){ alert('Masukkan 4 angka PIN'); return; }
   setLoader('Verifikasi PIN...');
-  fetch(https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec, {
+  fetch(GAS_URL, {
     method:'POST',
     body: JSON.stringify({ action:'verify_pin', kode:pilihanKode, pin:pinBuffer })
   })
@@ -807,7 +807,7 @@ function doGantiPin(){
     alert('PIN harus 4 angka'); return;
   }
   setLoader('Menyimpan PIN baru...');
-  fetch(https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec, {
+  fetch(GAS_URL, {
     method:'POST',
     body: JSON.stringify({ action:'ganti_pin', kode:pilihanKode, pin_lama:pinLama, pin_baru:pinBaru })
   })
@@ -827,7 +827,7 @@ function doGantiPin(){
 function goForm(){
   if(!pilihanKode) return;
   setLoader('Mengambil data...');
-  fetch(https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec+'?action=get_target_salesman&kode='+pilihanKode+'&siklus='+encodeURIComponent(siklusAktif))
+  fetch(GAS_URL+'?action=get_target_salesman&kode='+pilihanKode+'&siklus='+encodeURIComponent(siklusAktif))
     .then(function(r){ return r.json(); })
     .then(function(d){ hideLoader(); targetData=d; setupForm(d); })
     .catch(function(){ hideLoader(); targetData=null; setupForm(null); });
@@ -980,7 +980,7 @@ document.getElementById('sales_hari_siklus').addEventListener('blur', function()
 function saveHariSiklus(val){
   // Hari siklus TIDAK dikali 1000 - simpan langsung
   setLoader('Menyimpan Hari Siklus...');
-  fetch(https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec, {
+  fetch(GAS_URL, {
     method:'POST',
     body: JSON.stringify({
       action:'save_target_salesman',
@@ -1033,7 +1033,7 @@ function saveTgtMonth(val){
   // val dalam ribuan → simpan ke GAS dalam Rupiah penuh (×1000)
   var valAsli = String(parseFloat(val) * 1000);
   setLoader('Menyimpan Target Month...');
-  fetch(https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec, {
+  fetch(GAS_URL, {
     method:'POST',
     body: JSON.stringify({
       action:'save_target_salesman',
@@ -1065,7 +1065,7 @@ function saveTgtYTDMonth(val){
   // val dalam ribuan → simpan ke GAS dalam Rupiah penuh (×1000)
   var valAsli = String(parseFloat(val) * 1000);
   setLoader('Menyimpan Target YTD Month...');
-  fetch(https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec, {
+  fetch(GAS_URL, {
     method:'POST',
     body: JSON.stringify({
       action:'save_target_salesman',
@@ -1274,7 +1274,7 @@ function submitForm(){
     pod_outlets: getPodData().map(function(p){ return {toko:p.toko, jumlah:String(parseFloat(p.jumlah||0)*rb), keterangan:p.keterangan}; }),
     is_valid: true
   };
-  fetch(https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec,{method:'POST',body:JSON.stringify(payload)})
+  fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload)})
     .then(function(r){ return r.json(); })
     .then(function(d){
       hideLoader();
@@ -1466,7 +1466,7 @@ function loadRiwayat(){
   var wrap = document.getElementById('riwayatList');
   wrap.innerHTML = '<div style="text-align:center;padding:20px"><span class="spin-sm"></span>'+
     '<span style="color:var(--muted2);font-size:12px;margin-left:6px">Memuat...</span></div>';
-  fetch(https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec+'?action=get_riwayat_salesman&kode='+pilihanKode+
+  fetch(GAS_URL+'?action=get_riwayat_salesman&kode='+pilihanKode+
     '&tgl_dari='+dari+'&tgl_sampai='+sampai)
     .then(function(r){ return r.json(); })
     .then(function(d){

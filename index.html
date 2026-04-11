@@ -324,22 +324,52 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
         padding:14px;margin-bottom:10px">
         <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--muted2);
           text-transform:uppercase;margin-bottom:10px">Filter Tanggal</div>
-        <div style="display:flex;gap:6px;margin-bottom:8px">
-          <div style="flex:1">
-            <div style="font-size:9px;color:var(--muted2);margin-bottom:4px">Dari</div>
-            <input type="date" id="rwDari"
-              style="width:100%;background:var(--bg);border:1.5px solid var(--border);
-                border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--font);
-                font-size:12px;outline:none">
-          </div>
-          <div style="flex:1">
-            <div style="font-size:9px;color:var(--muted2);margin-bottom:4px">Sampai</div>
-            <input type="date" id="rwSampai"
-              style="width:100%;background:var(--bg);border:1.5px solid var(--border);
-                border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--font);
-                font-size:12px;outline:none">
+
+        <!-- Toggle 1 tanggal / rentang -->
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <button id="rwMode1" onclick="setRwMode('satu')"
+            style="flex:1;padding:7px;border-radius:7px;font-family:var(--font);font-size:11px;
+              font-weight:700;cursor:pointer;border:1.5px solid var(--accent);
+              background:var(--accent);color:#fff;transition:all .2s">
+            📅 1 Tanggal
+          </button>
+          <button id="rwMode2" onclick="setRwMode('rentang')"
+            style="flex:1;padding:7px;border-radius:7px;font-family:var(--font);font-size:11px;
+              font-weight:700;cursor:pointer;border:1.5px solid var(--border);
+              background:var(--card2);color:var(--muted2);transition:all .2s">
+            📆 Rentang
+          </button>
+        </div>
+
+        <!-- Filter 1 tanggal -->
+        <div id="rwSatuWrap" style="margin-bottom:8px">
+          <div style="font-size:9px;color:var(--muted2);margin-bottom:4px">Pilih Tanggal</div>
+          <input type="date" id="rwSatu"
+            style="width:100%;background:var(--bg);border:1.5px solid var(--border);
+              border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--font);
+              font-size:12px;outline:none">
+        </div>
+
+        <!-- Filter rentang -->
+        <div id="rwRentangWrap" style="display:none;margin-bottom:8px">
+          <div style="display:flex;gap:6px">
+            <div style="flex:1">
+              <div style="font-size:9px;color:var(--muted2);margin-bottom:4px">Dari</div>
+              <input type="date" id="rwDari"
+                style="width:100%;background:var(--bg);border:1.5px solid var(--border);
+                  border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--font);
+                  font-size:12px;outline:none">
+            </div>
+            <div style="flex:1">
+              <div style="font-size:9px;color:var(--muted2);margin-bottom:4px">Sampai</div>
+              <input type="date" id="rwSampai"
+                style="width:100%;background:var(--bg);border:1.5px solid var(--border);
+                  border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--font);
+                  font-size:12px;outline:none">
+            </div>
           </div>
         </div>
+
         <button onclick="loadRiwayat()"
           style="width:100%;padding:10px;background:var(--accent);color:#fff;border:none;
             border-radius:8px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer">
@@ -1389,10 +1419,12 @@ function switchSalesmanTab(tab){
   if(isRiwayat){
     btnR.style.background='var(--accent)'; btnR.style.color='#fff'; btnR.style.borderColor='var(--accent)';
     btnL.style.background='var(--card2)'; btnL.style.color='var(--muted2)'; btnL.style.borderColor='var(--border)';
-    // Set default tanggal hari ini dan 7 hari lalu
+    // Set default tanggal hari ini untuk mode 1 tanggal
     var now = new Date();
+    var today = now.toISOString().split('T')[0];
     var tujuhHariLalu = new Date(now); tujuhHariLalu.setDate(now.getDate()-7);
-    document.getElementById('rwSampai').value = now.toISOString().split('T')[0];
+    document.getElementById('rwSatu').value   = today;
+    document.getElementById('rwSampai').value = today;
     document.getElementById('rwDari').value   = tujuhHariLalu.toISOString().split('T')[0];
   } else {
     btnL.style.background='var(--accent)'; btnL.style.color='#fff'; btnL.style.borderColor='var(--accent)';
@@ -1401,10 +1433,36 @@ function switchSalesmanTab(tab){
 }
 
 // ── LOAD RIWAYAT SALESMAN ──
+var rwMode = 'satu'; // 'satu' atau 'rentang'
+
+function setRwMode(mode){
+  rwMode = mode;
+  var isSatu = mode === 'satu';
+  document.getElementById('rwSatuWrap').style.display    = isSatu ? 'block' : 'none';
+  document.getElementById('rwRentangWrap').style.display = isSatu ? 'none'  : 'flex';
+  var b1 = document.getElementById('rwMode1');
+  var b2 = document.getElementById('rwMode2');
+  if(isSatu){
+    b1.style.background='var(--accent)'; b1.style.color='#fff'; b1.style.borderColor='var(--accent)';
+    b2.style.background='var(--card2)'; b2.style.color='var(--muted2)'; b2.style.borderColor='var(--border)';
+  } else {
+    b2.style.background='var(--accent)'; b2.style.color='#fff'; b2.style.borderColor='var(--accent)';
+    b1.style.background='var(--card2)'; b1.style.color='var(--muted2)'; b1.style.borderColor='var(--border)';
+  }
+}
+
 function loadRiwayat(){
-  var dari   = document.getElementById('rwDari').value;
-  var sampai = document.getElementById('rwSampai').value;
-  if(!dari||!sampai){ alert('Isi tanggal dari dan sampai'); return; }
+  var dari, sampai;
+  if(rwMode === 'satu'){
+    var tgl = document.getElementById('rwSatu').value;
+    if(!tgl){ alert('Pilih tanggal dulu'); return; }
+    dari = tgl; sampai = tgl;
+  } else {
+    dari   = document.getElementById('rwDari').value;
+    sampai = document.getElementById('rwSampai').value;
+    if(!dari||!sampai){ alert('Isi tanggal dari dan sampai'); return; }
+    if(dari > sampai){ alert('Tanggal dari tidak boleh lebih besar dari sampai'); return; }
+  }
   var wrap = document.getElementById('riwayatList');
   wrap.innerHTML = '<div style="text-align:center;padding:20px"><span class="spin-sm"></span>'+
     '<span style="color:var(--muted2);font-size:12px;margin-left:6px">Memuat...</span></div>';

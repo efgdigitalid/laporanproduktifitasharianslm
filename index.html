@@ -661,6 +661,9 @@ var pinBuffer        = ''; // buffer PIN yang diketik
   var now = new Date();
   document.getElementById('topDate').textContent =
     HARI_NAMA[now.getDay()] + ', ' + now.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
+  // Tampilkan kode default LANGSUNG tanpa tunggu GAS
+  buildKodeGrid();
+  // Lalu update dari GAS jika berhasil
   fetchSiklus();
   fetchKodeList();
 })();
@@ -670,15 +673,15 @@ function fetchKodeList(){
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.ok && d.list && d.list.length > 0){
-        // Handle object {kode, has_pin} atau string langsung
         KODE = d.list.map(function(item){
           return typeof item === 'object' ? item.kode : item;
         });
+        buildKodeGrid(); // update grid dengan kode dari GAS
       }
-      buildKodeGrid();
+      // jika gagal, grid sudah tampil dengan kode default
     })
     .catch(function(){
-      buildKodeGrid(); // pakai default jika gagal
+      // grid sudah tampil dengan kode default, tidak perlu apa-apa
     });
 }
 
@@ -1609,12 +1612,15 @@ function renderRiwayat(data){
         '</div>'+
       '</div>';
 
-    // Simpan data untuk generate WA
+    // Simpan data untuk generate WA — termasuk POD
     if(!window._riwayatData) window._riwayatData = {};
+    var podRaw = [];
+    try{ podRaw = JSON.parse(r['POD Outlets JSON']||'[]'); }catch(e){}
     window._riwayatData[idx] = {r:r, tgl:tgl, hari:hari, ecTgt:ecTgt, cDay:cDay, cMTD:cMTD,
       ecHi:ecHi, ecHiP:ecHiP, ecMTD:ecMTD, ecMTP:ecMTP, itTgt:itTgt, itHi:itHi, itHiI:itHiI,
       itMTD:itMTD, itMTI:itMTI, tgtM:tgtM, tgtD:tgtD, sHi:sHi, sMTD:sMTD, sYTD:sYTD,
-      sHiP:sHiP, sMTP:sMTP, sYTP:sYTP, odTgt:odTgt, odRl:odRl, odCl:odCl, odVal:odVal, odPct:odPct};
+      sHiP:sHiP, sMTP:sMTP, sYTP:sYTP, odTgt:odTgt, odRl:odRl, odCl:odCl, odVal:odVal, odPct:odPct,
+      pods:podRaw};
   });
 
   wrap.innerHTML = html;
@@ -1657,8 +1663,19 @@ function genWARiwayat(idx){
     '   Realisasi/CD    : '+fR(d.odRl)+'\n'+
     '   Collection      : '+d.odCl+'\n'+
     '   OD in Value     : '+fR(d.odVal)+'\n'+
-    '   Over Due        : '+d.odPct+'\n\n'+
-    '_Terimakasih_ 🙏';
+    '   Over Due        : '+d.odPct+'\n';
+
+  // Tambahkan POD jika ada
+  if(d.pods && d.pods.length > 0){
+    teks += '\n*POD — Outlet Tidak Bayar*\n';
+    d.pods.forEach(function(pod,i){
+      teks += '   '+(i+1)+'. '+pod.toko+' : '+fR(parseFloat(pod.jumlah)||0);
+      if(pod.keterangan) teks += ' ('+pod.keterangan+')';
+      teks += '\n';
+    });
+  }
+
+  teks += '\n_Terimakasih_ 🙏';
 
   document.getElementById('waRwTeks_'+idx).textContent = teks;
   document.getElementById('waRw_'+idx).style.display = 'block';

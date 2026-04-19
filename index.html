@@ -704,6 +704,7 @@ function buildKodeGrid(){
 }
 
 var tglMulaiSiklus = ''; // tanggal mulai siklus aktif
+var mtdKemarin = {callMTD:0, ecMTD:0, itemMTD:0, salesMTD:0, salesYTD:0};
 
 function fetchSiklus(){
   fetch(GAS_URL+'?action=get_siklus')
@@ -1213,147 +1214,38 @@ function hideLoader(){ document.getElementById('loader').classList.remove('show'
 
 // ── CALC EC ──
 function calcEC(){
-  var ecTgt=n('ec_target')||26, hiTk=n('ec_hi_tk'), mtdTk=n('ec_mtd_tk');
-  var cDay=n('ec_callday'), cMTD=n('ec_callmtd');
-  // EC Hi% = EC Hi ÷ Call Day
-  setPct('ec_hi_pct',  hiTk,  cDay);
-  // EC MTD% = EC MTD ÷ Call MTD
-  setPct('ec_mtd_pct', mtdTk, cMTD);
-  var errs=[];
-  if(cDay>0&&cMTD>0&&cDay>cMTD) errs.push('Call Day > Call MTD');
-  if(hiTk>0&&mtdTk>0&&hiTk>mtdTk) errs.push('EC Hi > EC MTD');
-  var has=cDay||cMTD||hiTk||mtdTk;
-  if(!has){ setSecSt('secEC','stEC',null); setVM('vmEC','',''); }
-  else if(errs.length){ setSecSt('secEC','stEC','err'); setVM('vmEC','err','! '+errs.join(' | ')); }
-  else{ setSecSt('secEC','stEC','ok'); setVM('vmEC','ok','EC valid'); }
+  var cDay = n('ec_callday');
+  var ecHi = n('ec_hi_tk');
+  // Auto akumulasi MTD dari siklus
+  var callMTD = mtdKemarin.callMTD + cDay;
+  var ecMTD   = mtdKemarin.ecMTD   + ecHi;
+  // Set MTD otomatis (readonly)
+  document.getElementById('ec_callmtd').value = callMTD > 0 ? callMTD : '';
+  document.getElementById('ec_mtd_tk').value  = ecMTD   > 0 ? ecMTD   : '';
+  // Hitung %
+  var hiPct  = cDay    > 0 ? ((ecHi  / cDay   )*100).toFixed(1)+'%' : '';
+  var mtdPct = callMTD > 0 ? ((ecMTD / callMTD)*100).toFixed(1)+'%' : '';
+  document.getElementById('ec_hi_pct').value  = hiPct;
+  document.getElementById('ec_mtd_pct').value = mtdPct;
+  if(cDay||ecHi){
+    setSecSt('secEC','stEC', cDay>0&&(ecHi/cDay)>=0.85 ? 'ok':'warn');
+    setVM('vmEC','ok','Call Day: '+cDay+' | EC Hi: '+ecHi+' ('+hiPct+')');
+  } else { setSecSt('secEC','stEC',null); setVM('vmEC','',''); }
   calcItem(); validateAll();
 }
 
 // ── CALC ITEM ──
 function calcItem(){
-  var ecHi=n('ec_hi_tk'), ecMTD=n('ec_mtd_tk');
-  var totHi=n('item_total_hi'), totMTD=n('item_total_mtd');
-  document.getElementById('item_hi_val').value  = (totHi>0&&ecHi>0)   ? (totHi/ecHi).toFixed(2)   : '';
-  document.getElementById('item_mtd_val').value = (totMTD>0&&ecMTD>0) ? (totMTD/ecMTD).toFixed(2) : '';
-  var errs=[];
-  if(totHi>0&&totMTD>0&&totHi>totMTD) errs.push('Total Item Hi > MTD');
-  var has=totHi||totMTD;
-  if(!has){ setSecSt('secItem','stItem',null); setVM('vmItem','',''); }
-  else if(errs.length){ setSecSt('secItem','stItem','err'); setVM('vmItem','err','! '+errs.join(' | ')); }
-  else{ setSecSt('secItem','stItem','ok'); setVM('vmItem','ok','Item valid'); }
-  validateAll();
-}
-
-// ── CALC SALES ──
-function calcSales(){
-  // Input dalam RIBUAN — kalikan 1000 untuk nilai asli
-  var tgtMonth = n('sales_tgt_month') * 1000;
-  var hari     = n('sales_hari_siklus');
-  var tgtYTD   = n('sales_tgt_ytd_month') * 1000;
-  var tgtDay   = (tgtMonth>0&&hari>0) ? tgtMonth/hari : 0;
-  var sHi  = n('sales_hi_val')  * 1000;
-  var sMTD = n('sales_mtd_val') * 1000;
-  var sYTD = n('sales_ytd_val') * 1000;
-  // Target Day tampil dalam ribuan
-  if(tgtDay>0) document.getElementById('sales_tgt_day').value = fmtAngka(Math.round(tgtDay/1000));
-  else document.getElementById('sales_tgt_day').value='';
-  setPct('sales_hi_pct',  sHi,  tgtDay);
-  setPct('sales_mtd_pct', sMTD, tgtMonth);
-  setPct('sales_ytd_pct', sYTD, tgtYTD);
-  var errs=[];
-  if(sHi>0&&sMTD>0&&sHi>sMTD) errs.push('Sales Hi > Sales MTD');
-  var has=sHi||sMTD||tgtMonth;
-  if(!has){ setSecSt('secSales','stSales',null); setVM('vmSales','',''); }
-  else if(errs.length){ setSecSt('secSales','stSales','err'); setVM('vmSales','err','! '+errs.join(' | ')); }
-  else{ setSecSt('secSales','stSales','ok'); setVM('vmSales','ok','Sales valid'); }
-  validateAll();
-}
-
-// ── HELPER MULTIPLIER ──
-function getMul(id){ var el=document.getElementById(id); return el?parseFloat(el.value)||1:1; }
-
-// ── MTD KEMARIN (dari GAS) ──
-var mtdKemarin = {
-  callMTD:0, ecMTD:0, itemMTD:0, salesMTD:0, salesYTD:0
-};
-
-function loadMTDKemarin(){
-  if(!pilihanKode) return;
-  var tgl = document.getElementById('tanggal').value;
-  if(!tgl) return;
-  // Ambil data terbaru sebelum tanggal ini
-  fetch(GAS_URL+'?action=get_riwayat_salesman&kode='+pilihanKode+
-    '&tgl_dari=2026-01-01&tgl_sampai='+tgl)
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if(!d.ok||!d.data||!d.data.length) return;
-      // Cari data terbaru sebelum tanggal ini (bukan tanggal ini sendiri)
-      var prev = null;
-      d.data.forEach(function(r){
-        var rTgl = (r['Tanggal']||'').substring(0,10);
-        if(rTgl < tgl){
-          if(!prev || rTgl > (prev['Tanggal']||'').substring(0,10)) prev = r;
-        }
-      });
-      if(prev){
-        mtdKemarin.callMTD  = parseFloat(prev['EC Call MTD']||0);
-        mtdKemarin.ecMTD    = parseFloat(prev['EC MTD Tk']||0);
-        mtdKemarin.itemMTD  = parseFloat(prev['Item Total MTD']||0);
-        mtdKemarin.salesMTD = parseFloat(prev['Sales MTD Val']||0);
-        mtdKemarin.salesYTD = parseFloat(prev['Sales YTD Val']||0);
-      } else {
-        // Tidak ada data sebelumnya = hari pertama siklus
-        mtdKemarin = {callMTD:0,ecMTD:0,itemMTD:0,salesMTD:0,salesYTD:0};
-      }
-      // Recalc setelah MTD kemarin dimuat
-      calcEC(); calcItem(); calcSales();
-    })
-    .catch(function(){ /* gagal fetch, MTD tetap 0 */ });
-}
-
-// ── CALC EC ──
-function calcEC(){
-  var cDay = n('ec_callday');
-  var ecHi = n('ec_hi_tk');
-
-  // Auto akumulasi MTD
-  var callMTD = mtdKemarin.callMTD + cDay;
-  var ecMTD   = mtdKemarin.ecMTD   + ecHi;
-
-  // Set nilai MTD otomatis
-  document.getElementById('ec_callmtd').value = callMTD || '';
-  document.getElementById('ec_mtd_tk').value  = ecMTD   || '';
-
-  // Hitung %
-  var ecHiPct  = cDay   > 0 ? ((ecHi  / cDay  )*100).toFixed(1)+'%' : '';
-  var ecMTDPct = callMTD > 0 ? ((ecMTD / callMTD)*100).toFixed(1)+'%' : '';
-  document.getElementById('ec_hi_pct').value  = ecHiPct;
-  document.getElementById('ec_mtd_pct').value = ecMTDPct;
-
-  if(cDay||ecHi){
-    setSecSt('secEC','stEC', ecHi/Math.max(cDay,1)>=0.85 ? 'ok':'warn');
-    setVM('vmEC','ok','Call Day: '+cDay+' | EC Hi: '+ecHi+' ('+ecHiPct+')');
-  } else { setSecSt('secEC','stEC',null); setVM('vmEC','',''); }
-
-  calcItem();
-  validateAll();
-}
-
-// ── CALC ITEM ──
-function calcItem(){
-  var ecHi   = n('ec_hi_tk');
-  var ecMTD  = parseFloat(document.getElementById('ec_mtd_tk').value||0);
-  var totHi  = n('item_total_hi');
-
+  var ecHi  = n('ec_hi_tk');
+  var ecMTD = parseFloat(document.getElementById('ec_mtd_tk').value||0);
+  var totHi = n('item_total_hi');
   // Auto akumulasi MTD
   var totMTD = mtdKemarin.itemMTD + totHi;
-  document.getElementById('item_total_mtd').value = totMTD || '';
-
-  var hiVal  = ecHi  > 0 ? (totHi  / ecHi ).toFixed(2) : '';
-  var mtdVal = ecMTD > 0 ? (totMTD / ecMTD).toFixed(2) : '';
+  document.getElementById('item_total_mtd').value = totMTD > 0 ? totMTD : '';
+  var hiVal  = ecHi  > 0 ? (totHi /ecHi ).toFixed(2) : '';
+  var mtdVal = ecMTD > 0 ? (totMTD/ecMTD).toFixed(2) : '';
   document.getElementById('item_hi_val').value  = hiVal;
   document.getElementById('item_mtd_val').value = mtdVal;
-
   if(totHi||totMTD){
     setSecSt('secItem','stItem','ok');
     setVM('vmItem','ok','Item Hi: '+hiVal+' | Item MTD: '+mtdVal);
@@ -1368,24 +1260,20 @@ function calcSales(){
   var tgtYTD = n('sales_tgt_ytd_month') * rb;
   var hari   = n('sales_hari_siklus');
   var sHi    = n('sales_hi_val')        * rb;
-
-  // Auto akumulasi MTD dan YTD dalam siklus
+  // Auto akumulasi MTD dan YTD dari siklus
   var sMTD   = mtdKemarin.salesMTD + sHi;
   var sYTD   = mtdKemarin.salesYTD + sHi;
-
   var tgtDay = hari > 0 ? Math.round(tgtM / hari) : 0;
   document.getElementById('sales_tgt_day').value = tgtDay > 0 ? fmtAngka(tgtDay) : '';
-
   var hiPct  = tgtDay > 0 ? ((sHi /tgtDay)*100).toFixed(1)+'%' : '';
   var mtdPct = tgtM   > 0 ? ((sMTD/tgtM  )*100).toFixed(1)+'%' : '';
   var ytdPct = tgtYTD > 0 ? ((sYTD/tgtYTD)*100).toFixed(1)+'%' : '';
-
+  // Set MTD dan YTD otomatis (readonly)
   document.getElementById('sales_mtd_val').value = sMTD > 0 ? fmtAngka(Math.round(sMTD)) : '';
   document.getElementById('sales_mtd_pct').value = mtdPct;
   document.getElementById('sales_ytd_val').value = sYTD > 0 ? fmtAngka(Math.round(sYTD)) : '';
   document.getElementById('sales_ytd_pct').value = ytdPct;
   document.getElementById('sales_hi_pct').value  = hiPct;
-
   if(sHi||sMTD){
     setSecSt('secSales','stSales','ok');
     setVM('vmSales','ok','Sales Hi: Rp '+fmtAngka(Math.round(sHi))+' | MTD: Rp '+fmtAngka(Math.round(sMTD)));

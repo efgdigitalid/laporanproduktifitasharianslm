@@ -486,26 +486,30 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
       <div class="sec-body">
 
         <div class="frow" id="rowTgtMonth">
-          <span class="flabel">Target Month<small id="tgtMonthStatus">Wajib isi ≤ 7 hari</small></span><span class="fsep">:</span>
+          <span class="flabel">Target Month<small id="tgtMonthStatus">Dari supervisor</small></span><span class="fsep">:</span>
           <span class="frp">Rp</span>
-          <input class="finp" id="sales_tgt_month" placeholder="cth: 500.000" oninput="calcSales()" type="number">
-          <span class="funit-rb">ribuan</span>
-          <span class="lock-badge hidden" id="lockTgtMonth">🔒</span>
+          <input class="finp ro" id="sales_tgt_month" readonly tabindex="-1">
+          <span class="funit-rb" style="color:var(--muted2)">auto</span>
         </div>
 
         <div class="frow" id="rowTgtYTDMonth">
-          <span class="flabel">Target YTD<small>Input manual</small></span><span class="fsep">:</span>
+          <span class="flabel">Target YTD Kum<small>Auto akumulasi MTD lalu</small></span><span class="fsep">:</span>
           <span class="frp">Rp</span>
-          <input class="finp" id="sales_tgt_ytd_month" placeholder="cth: 6.000.000" oninput="calcSales()" type="number">
-          <span class="funit-rb">ribuan</span>
-          <span class="lock-badge hidden" id="lockTgtYTD">🔒</span>
+          <input class="finp ro" id="sales_tgt_ytd_month" readonly tabindex="-1">
+          <span class="funit-rb" style="color:var(--muted2)">auto</span>
+        </div>
+
+        <div class="frow" id="rowTgtMTDKum">
+          <span class="flabel">Target MTD Kum<small>Dari supervisor</small></span><span class="fsep">:</span>
+          <span class="frp">Rp</span>
+          <input class="finp ro" id="sales_tgt_mtd_kum" readonly tabindex="-1">
+          <span class="funit-rb" style="color:var(--muted2)">auto</span>
         </div>
 
         <div class="frow" id="rowHariSiklus">
-          <span class="flabel">Hari Siklus<small id="hariSiklusStatus">Wajib isi sekali</small></span><span class="fsep">:</span>
-          <input class="finp" id="sales_hari_siklus" placeholder="cth: 26" oninput="calcSales()" type="number">
+          <span class="flabel">Hari Siklus<small>Dari supervisor</small></span><span class="fsep">:</span>
+          <input class="finp ro" id="sales_hari_siklus" readonly tabindex="-1">
           <span class="funit">hari</span>
-          <span class="lock-badge hidden" id="lockHariSiklus">🔒</span>
         </div>
 
         <div class="frow">
@@ -532,10 +536,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
         </div>
 
         <div class="frow">
-          <span class="flabel">Growth YTD<small>Auto akumulasi</small></span><span class="fsep">:</span>
+          <span class="flabel">Growth YTD<small>= Sales MTD bulan ini</small></span><span class="fsep">:</span>
           <div class="fdouble">
             <input class="finp auto-blue" id="sales_ytd_val" readonly tabindex="-1">
             <input class="finp auto-blue" id="sales_ytd_pct" readonly tabindex="-1">
+          </div>
+        </div>
+        <div class="frow">
+          <span class="flabel">Growth YTD Kumulatif<small>Akumulasi s/d bulan ini</small></span><span class="fsep">:</span>
+          <div class="fdouble">
+            <input class="finp auto-blue" id="sales_ytd_kum_val" readonly tabindex="-1">
+            <input class="finp auto-blue" id="sales_ytd_kum_pct" readonly tabindex="-1">
           </div>
         </div>
         <div class="val-msg" id="vmSales"></div>
@@ -640,7 +651,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 </div>
 
 <script>
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec';
+var https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec = 'https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec';
 
 var KODE      = ['S005','S016','S017','S018','S019','S120','S121'];
 var HARI_NAMA = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -658,23 +669,29 @@ var pinBuffer        = ''; // buffer PIN yang diketik
 (function(){
   function init(){
     var now = new Date();
-    document.getElementById('topDate').textContent =
+    var topDate = document.getElementById('topDate');
+    if(topDate) topDate.textContent =
       HARI_NAMA[now.getDay()] + ', ' + now.toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'});
-    // Tampilkan kode default LANGSUNG tanpa tunggu GAS
+    // Tampilkan kode default LANGSUNG
     buildKodeGrid();
-    // Lalu update dari GAS jika berhasil
     fetchSiklus();
     fetchKodeList();
   }
+  // Jalankan setelah DOM siap — dengan fallback retry
   if(document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
+  // Retry setelah 500ms untuk antisipasi timing issue
+  setTimeout(function(){
+    var grid = document.getElementById('kodeGrid');
+    if(grid && grid.children.length === 0) buildKodeGrid();
+  }, 500);
 })();
 
 function fetchKodeList(){
-  fetch(GAS_URL+'?action=get_salesman_list')
+  fetch(https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec+'?action=get_salesman_list')
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.ok && d.list && d.list.length > 0){
@@ -703,11 +720,14 @@ function buildKodeGrid(){
   });
 }
 
-var tglMulaiSiklus = ''; // tanggal mulai siklus aktif
+var tglMulaiSiklus = '';
 var mtdKemarin = {callMTD:0, ecMTD:0, itemMTD:0, salesMTD:0, salesYTD:0};
+var growthYTDTarget = 0;
+var ytdKumulatifKemarin = 0;
+var mtdKumTarget = 0; // Target MTD Kumulatif dari supervisor
 
 function fetchSiklus(){
-  fetch(GAS_URL+'?action=get_siklus')
+  fetch(https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec+'?action=get_siklus')
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(d.ok){
@@ -737,36 +757,40 @@ function loadMTDKemarin(){
   var tgl = document.getElementById('tanggal').value;
   if(!tgl) return;
 
-  // Gunakan tanggal mulai siklus aktif sebagai batas awal MTD
-  // Jika siklus belum diset, pakai awal bulan ini
   var tglAwal = tglMulaiSiklus;
   if(!tglAwal){
     var now = new Date();
     tglAwal = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-01';
   }
 
-  // Reset MTD dulu
+  // Reset semua
   mtdKemarin = {callMTD:0, ecMTD:0, itemMTD:0, salesMTD:0, salesYTD:0};
+  ytdKumulatifKemarin = 0;
 
-  // Jika tanggal yang dipilih <= tanggal mulai siklus → hari pertama siklus → MTD = 0
   if(tgl <= tglAwal){
+    // Hari pertama siklus - tidak ada data sebelumnya
+    var tgtYTDEl = document.getElementById('sales_tgt_ytd_month');
+    if(tgtYTDEl) tgtYTDEl.value = '0';
     calcEC(); calcItem(); calcSales();
     return;
   }
 
-  fetch(GAS_URL+'?action=get_riwayat_salesman&kode='+pilihanKode+
-    '&tgl_dari='+tglAwal+'&tgl_sampai='+tgl)
+  // Ambil semua data dari awal tahun untuk hitung YTD Kumulatif
+  var tahun = tgl.substring(0,4);
+  fetch(https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec+'?action=get_riwayat_salesman&kode='+pilihanKode+
+    '&tgl_dari='+tahun+'-01-01&tgl_sampai='+tgl)
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d.ok||!d.data||!d.data.length){
         calcEC(); calcItem(); calcSales();
         return;
       }
-      // Cari data terbaru sebelum tanggal ini (dalam siklus aktif)
+
+      // 1. Cari data terbaru dalam siklus aktif (sebelum tgl ini) untuk MTD
       var prev = null;
       d.data.forEach(function(r){
         var rTgl = (r['Tanggal']||'').substring(0,10);
-        if(rTgl < tgl){
+        if(rTgl >= tglAwal && rTgl < tgl){
           if(!prev || rTgl > (prev['Tanggal']||'').substring(0,10)) prev = r;
         }
       });
@@ -775,8 +799,24 @@ function loadMTDKemarin(){
         mtdKemarin.ecMTD    = parseFloat(prev['EC MTD Tk']||0);
         mtdKemarin.itemMTD  = parseFloat(prev['Item Total MTD']||0);
         mtdKemarin.salesMTD = parseFloat(prev['Sales MTD Val']||0);
-        mtdKemarin.salesYTD = parseFloat(prev['Sales YTD Val']||0);
+        mtdKemarin.salesYTD = parseFloat(prev['Sales MTD Val']||0); // YTD = MTD bulan ini
       }
+
+      // 2. Hitung Target YTD Kum = total MTD terbesar dari bulan-bulan sebelumnya
+      var perBulan = {};
+      d.data.forEach(function(r){
+        var rTgl = (r['Tanggal']||'').substring(0,10);
+        if(rTgl < tglAwal){ // hanya data sebelum siklus ini
+          var bulan  = rTgl.substring(0,7); // yyyy-MM
+          var mtdVal = parseFloat(r['Sales MTD Val']||0);
+          if(!perBulan[bulan] || mtdVal > perBulan[bulan]) perBulan[bulan] = mtdVal;
+        }
+      });
+      // Target YTD Kum = akumulasi MTD dari semua bulan sebelumnya
+      ytdKumulatifKemarin = Object.values(perBulan).reduce(function(a,b){ return a+b; }, 0);
+      var el = document.getElementById('sales_tgt_ytd_month');
+      if(el) el.value = ytdKumulatifKemarin > 0 ? fmtAngka(Math.round(ytdKumulatifKemarin)) : 'Rp 0';
+
       calcEC(); calcItem(); calcSales();
     })
     .catch(function(){
@@ -852,7 +892,7 @@ function pinShake(){
 function pinSubmit(){
   if(pinBuffer.length < 4){ alert('Masukkan 4 angka PIN'); return; }
   setLoader('Verifikasi PIN...');
-  fetch(GAS_URL, {
+  fetch(https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec, {
     method:'POST',
     body: JSON.stringify({ action:'verify_pin', kode:pilihanKode, pin:pinBuffer })
   })
@@ -885,7 +925,7 @@ function doGantiPin(){
     alert('PIN harus 4 angka'); return;
   }
   setLoader('Menyimpan PIN baru...');
-  fetch(GAS_URL, {
+  fetch(https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec, {
     method:'POST',
     body: JSON.stringify({ action:'ganti_pin', kode:pilihanKode, pin_lama:pinLama, pin_baru:pinBaru })
   })
@@ -905,7 +945,7 @@ function doGantiPin(){
 function goForm(){
   if(!pilihanKode) return;
   setLoader('Mengambil data...');
-  fetch(GAS_URL+'?action=get_target_salesman&kode='+pilihanKode+'&siklus='+encodeURIComponent(siklusAktif))
+  fetch(https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec+'?action=get_target_salesman&kode='+pilihanKode+'&siklus='+encodeURIComponent(siklusAktif))
     .then(function(r){ return r.json(); })
     .then(function(d){ hideLoader(); targetData=d; setupForm(d); })
     .catch(function(){ hideLoader(); targetData=null; setupForm(null); });
@@ -970,10 +1010,9 @@ function setupForm(d){
   // ── TARGET MONTH ──
   if(t && t.sales_tgt_month && String(t.sales_tgt_month).trim() !== ''){
     var tm = document.getElementById('sales_tgt_month');
-    // Nilai di sheet tersimpan dalam Rupiah penuh → tampilkan dalam ribuan (÷1000)
+    // Nilai di sheet tersimpan Rupiah penuh → tampilkan langsung
     var storedMonth = parseFloat(String(t.sales_tgt_month).replace(/[^0-9.]/g,''))||0;
-    // Deteksi: jika nilai > 10000 berarti tersimpan dalam Rupiah penuh, bagi 1000
-    tm.value = storedMonth > 10000 ? Math.round(storedMonth/1000) : storedMonth;
+    tm.value = storedMonth;
     tm.setAttribute('readonly','');
     tm.classList.remove('wajib'); tm.classList.add('locked');
     document.getElementById('lockTgtMonth').classList.remove('hidden');
@@ -1024,10 +1063,33 @@ function setupForm(d){
   }
   window._tgtYTDLocked = tgtYTDLocked;
 
-  // ── TARGET EC & ITEM dari target tersimpan ──
-  if(t && t.ec_target)             document.getElementById('ec_target').value          = t.ec_target;
-  if(t && t.item_target)           document.getElementById('item_target').value        = t.item_target;
-  if(t && t.sales_tgt_ytd_month)  document.getElementById('sales_tgt_ytd_month').value = t.sales_tgt_ytd_month;
+  // ── SEMUA TARGET DARI SUPERVISOR (readonly) ──
+  if(t){
+    // Target Month
+    var tgtM = parseFloat(String(t.sales_tgt_month||0).replace(/[^0-9.]/g,''))||0;
+    document.getElementById('sales_tgt_month').value = tgtM > 0 ? fmtAngka(tgtM) : '';
+
+    // Hari Siklus
+    var hariVal = parseFloat(String(t.sales_hari_siklus||0).replace(/[^0-9.]/g,''))||0;
+    if(hariVal > 0 && hariVal <= 31){
+      document.getElementById('sales_hari_siklus').value = hariVal;
+      hariSiklusLocked = true;
+    }
+
+    // EC & Item Target
+    if(t.ec_target)   document.getElementById('ec_target').value   = t.ec_target;
+    if(t.item_target) document.getElementById('item_target').value = t.item_target;
+
+    // Target MTD Kum dari supervisor
+    var mtdKumTgt = parseFloat(String(t.mtd_kum_target||0).replace(/[^0-9.]/g,''))||0;
+    mtdKumTarget = mtdKumTgt;
+    document.getElementById('sales_tgt_mtd_kum').value = mtdKumTgt > 0 ? fmtAngka(mtdKumTgt) : '';
+
+    // Target Growth YTD dari supervisor
+    growthYTDTarget = parseFloat(String(t.growth_ytd_target||0).replace(/[^0-9.]/g,''))||0;
+
+    calcSales();
+  }
 
   // Render banners
   var area = document.getElementById('bannerArea');
@@ -1062,7 +1124,7 @@ document.getElementById('sales_hari_siklus').addEventListener('blur', function()
 function saveHariSiklus(val){
   // Hari siklus TIDAK dikali 1000 - simpan langsung
   setLoader('Menyimpan Hari Siklus...');
-  fetch(GAS_URL, {
+  fetch(https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec, {
     method:'POST',
     body: JSON.stringify({
       action:'save_target_salesman',
@@ -1115,7 +1177,7 @@ function saveTgtMonth(val){
   // val dalam ribuan → simpan ke GAS dalam Rupiah penuh (×1000)
   var valAsli = String(parseFloat(val) * 1000);
   setLoader('Menyimpan Target Month...');
-  fetch(GAS_URL, {
+  fetch(https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec, {
     method:'POST',
     body: JSON.stringify({
       action:'save_target_salesman',
@@ -1147,7 +1209,7 @@ function saveTgtYTDMonth(val){
   // val dalam ribuan → simpan ke GAS dalam Rupiah penuh (×1000)
   var valAsli = String(parseFloat(val) * 1000);
   setLoader('Menyimpan Target YTD Month...');
-  fetch(GAS_URL, {
+  fetch(https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec, {
     method:'POST',
     body: JSON.stringify({
       action:'save_target_salesman',
@@ -1255,25 +1317,36 @@ function calcItem(){
 
 // ── CALC SALES ──
 function calcSales(){
-  var rb     = 1000;
-  var tgtM   = n('sales_tgt_month')     * rb;
-  var tgtYTD = n('sales_tgt_ytd_month') * rb;
+  // Target Month input Rupiah PENUH (tidak dikali 1000)
+  var tgtM   = n('sales_tgt_month');
   var hari   = n('sales_hari_siklus');
-  var sHi    = n('sales_hi_val')        * rb;
-  // Auto akumulasi MTD dan YTD dari siklus
+  var sHi    = n('sales_hi_val') * 1000; // Sales Hi masih ribuan
   var sMTD   = mtdKemarin.salesMTD + sHi;
-  var sYTD   = mtdKemarin.salesYTD + sHi;
+  var sYTD   = sMTD; // Growth YTD = Sales MTD bulan ini
+  var tgtYTDKum = ytdKumulatifKemarin; // Target YTD Kum = akumulasi MTD bulan lalu
+  var ytdKum = ytdKumulatifKemarin + sMTD; // YTD Kum total
+
   var tgtDay = hari > 0 ? Math.round(tgtM / hari) : 0;
   document.getElementById('sales_tgt_day').value = tgtDay > 0 ? fmtAngka(tgtDay) : '';
+
   var hiPct  = tgtDay > 0 ? ((sHi /tgtDay)*100).toFixed(1)+'%' : '';
   var mtdPct = tgtM   > 0 ? ((sMTD/tgtM  )*100).toFixed(1)+'%' : '';
-  var ytdPct = tgtYTD > 0 ? ((sYTD/tgtYTD)*100).toFixed(1)+'%' : '';
-  // Set MTD dan YTD otomatis (readonly)
-  document.getElementById('sales_mtd_val').value = sMTD > 0 ? fmtAngka(Math.round(sMTD)) : '';
-  document.getElementById('sales_mtd_pct').value = mtdPct;
-  document.getElementById('sales_ytd_val').value = sYTD > 0 ? fmtAngka(Math.round(sYTD)) : '';
-  document.getElementById('sales_ytd_pct').value = ytdPct;
-  document.getElementById('sales_hi_pct').value  = hiPct;
+  var ytdPct = tgtM   > 0 ? ((sYTD/tgtM  )*100).toFixed(1)+'%' : '';
+
+  // Growth YTD Kum % = (YTD Kum - Target YTD Kum) ÷ Target YTD Kum × 100
+  var ytdKumPct = '-';
+  if(tgtYTDKum > 0){
+    ytdKumPct = (((ytdKum - tgtYTDKum) / tgtYTDKum) * 100).toFixed(1) + '%';
+  }
+
+  document.getElementById('sales_mtd_val').value     = sMTD > 0 ? fmtAngka(Math.round(sMTD)) : '';
+  document.getElementById('sales_mtd_pct').value     = mtdPct;
+  document.getElementById('sales_ytd_val').value     = sYTD > 0 ? fmtAngka(Math.round(sYTD)) : '';
+  document.getElementById('sales_ytd_pct').value     = ytdPct;
+  document.getElementById('sales_hi_pct').value      = hiPct;
+  document.getElementById('sales_ytd_kum_val').value = ytdKum > 0 ? fmtAngka(Math.round(ytdKum)) : '';
+  document.getElementById('sales_ytd_kum_pct').value = ytdKumPct;
+
   if(sHi||sMTD){
     setSecSt('secSales','stSales','ok');
     setVM('vmSales','ok','Sales Hi: Rp '+fmtAngka(Math.round(sHi))+' | MTD: Rp '+fmtAngka(Math.round(sMTD)));
@@ -1323,18 +1396,20 @@ function submitForm(){
   setLoader('Menyimpan laporan...');
   document.getElementById('btnSubmit').disabled=true;
 
-  // Ambil nilai dalam ribuan × 1000
+  // Target Month input Rupiah PENUH, Sales Hi masih ribuan
   var rb      = 1000;
-  var tgtM    = n('sales_tgt_month')     * rb;
-  var tgtYTD  = n('sales_tgt_ytd_month') * rb;
-  var sHi     = n('sales_hi_val')        * rb;
+  var tgtM    = n('sales_tgt_month'); // Rupiah penuh langsung
+  var sHi     = n('sales_hi_val') * rb;
   var sMTD    = mtdKemarin.salesMTD + sHi;
-  var sYTD    = mtdKemarin.salesYTD + sHi;
+  var sYTD    = sMTD;
+  var tgtYTDKum = ytdKumulatifKemarin;
+  var ytdKum  = ytdKumulatifKemarin + sMTD;
   var hari    = n('sales_hari_siklus');
   var tgtDay  = hari > 0 ? Math.round(tgtM / hari) : 0;
   var hiPct   = tgtDay > 0 ? ((sHi/tgtDay)*100).toFixed(1)+'%' : '';
   var mtdPct  = tgtM   > 0 ? ((sMTD/tgtM)*100).toFixed(1)+'%'  : '';
-  var ytdPct  = tgtYTD > 0 ? ((sYTD/tgtYTD)*100).toFixed(1)+'%': '';
+  var ytdPct  = tgtM   > 0 ? ((sYTD/tgtM)*100).toFixed(1)+'%'  : '';
+  var ytdKumPct = tgtYTDKum > 0 ? (((ytdKum-tgtYTDKum)/tgtYTDKum)*100).toFixed(1)+'%' : '';
 
   var odTgt   = n('od_target')    * rb;
   var odReal  = n('od_realisasi') * rb;
@@ -1367,7 +1442,7 @@ function submitForm(){
     item_mtd_val:v('item_mtd_val'),
     item_mtd_info:v('item_mtd_info'),
     sales_tgt_month:    String(tgtM),
-    sales_tgt_ytd_month:String(tgtYTD),
+    sales_tgt_ytd_month:String(tgtYTDKum),
     sales_hari_siklus:  v('sales_hari_siklus'),
     sales_tgt_day:      String(tgtDay),
     sales_hi_val:       String(sHi),
@@ -1376,6 +1451,8 @@ function submitForm(){
     sales_mtd_pct:      mtdPct,
     sales_ytd_val:      String(sYTD),
     sales_ytd_pct:      ytdPct,
+    sales_ytd_kum_val:  String(ytdKum),
+    sales_ytd_kum_pct:  ytdKumPct,
     od_target:    String(odTgt),
     od_realisasi: String(odReal),
     od_collection:odColl,
@@ -1385,7 +1462,7 @@ function submitForm(){
     pod_outlets: getPodData().map(function(p){ return {toko:p.toko, jumlah:String(parseFloat(p.jumlah||0)*rb), keterangan:p.keterangan}; }),
     is_valid: true
   };
-  fetch(GAS_URL,{method:'POST',body:JSON.stringify(payload)})
+  fetch(https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec,{method:'POST',body:JSON.stringify(payload)})
     .then(function(r){ return r.json(); })
     .then(function(d){
       hideLoader();
@@ -1488,11 +1565,11 @@ function genWASalesman(){
     '   Item MTD   : '+(p.item_mtd_val||'-')+' ('+( p.item_mtd_info||'-')+')\n\n'+
     '➫ *SALES*\n'+
     '   Target Month   : '+fR(tgtMonth)+'\n'+
-    '   Target YTD     : '+fR(tgtYTD)+'\n'+
     '   Target Day     : '+fR(tgtDay)+'\n'+
     '   Sales Hi       : '+fR(sHi)+' / '+sHiPct+'\n'+
     '   Sales MTD      : '+fR(sMTD)+' / '+sMTDPct+'\n'+
-    '   Growth YTD     : '+fR(sYTD)+' / '+sYTDPct+'\n\n'+
+    '   Growth YTD     : '+fR(sYTD)+' / '+sYTDPct+'\n'+
+    '   YTD Kumulatif  : '+fR(parseFloat(p.sales_ytd_kum_val)||0)+' / '+(p.sales_ytd_kum_pct||'-')+'\n\n'+
     '➫ *OD / COLLECTION*\n'+
     '   Target Coll/EAR : '+fR(odTgt)+'\n'+
     '   Realisasi/CD    : '+fR(odReal)+'\n'+
@@ -1577,7 +1654,7 @@ function loadRiwayat(){
   var wrap = document.getElementById('riwayatList');
   wrap.innerHTML = '<div style="text-align:center;padding:20px"><span class="spin-sm"></span>'+
     '<span style="color:var(--muted2);font-size:12px;margin-left:6px">Memuat...</span></div>';
-  fetch(GAS_URL+'?action=get_riwayat_salesman&kode='+pilihanKode+
+  fetch(https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec+'?action=get_riwayat_salesman&kode='+pilihanKode+
     '&tgl_dari='+dari+'&tgl_sampai='+sampai)
     .then(function(r){ return r.json(); })
     .then(function(d){

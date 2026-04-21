@@ -724,7 +724,8 @@ var tglMulaiSiklus = '';
 var mtdKemarin = {callMTD:0, ecMTD:0, itemMTD:0, salesMTD:0, salesYTD:0};
 var growthYTDTarget = 0;
 var ytdKumulatifKemarin = 0;
-var mtdKumTarget = 0; // Target MTD Kumulatif dari supervisor
+var mtdKumTarget = 0;
+var tgtMonthRaw = 0; // Target Month dalam Rupiah penuh (angka murni)
 
 function fetchSiklus(){
   fetch(GAS_URL+'?action=get_siklus')
@@ -798,8 +799,18 @@ function loadMTDKemarin(){
         mtdKemarin.callMTD  = parseFloat(prev['EC Call MTD']||0);
         mtdKemarin.ecMTD    = parseFloat(prev['EC MTD Tk']||0);
         mtdKemarin.itemMTD  = parseFloat(prev['Item Total MTD']||0);
-        mtdKemarin.salesMTD = parseFloat(prev['Sales MTD Val']||0);
-        mtdKemarin.salesYTD = parseFloat(prev['Sales MTD Val']||0); // YTD = MTD bulan ini
+        // Deteksi format: jika Sales MTD Val jauh lebih besar dari Target Month
+        // berarti data lama tersimpan dalam ribuan, perlu dibagi 1000
+        var rawMTD = parseFloat(prev['Sales MTD Val']||0);
+        // Target Month sekarang Rupiah penuh (tgtMonthRaw)
+        // Jika rawMTD > tgtMonthRaw × 20 → kemungkinan data lama dalam ribuan
+        var batasMasuk = tgtMonthRaw > 0 ? tgtMonthRaw * 20 : 10000000000;
+        if(rawMTD > batasMasuk && rawMTD > 1000000000){
+          // Data lama dalam ribuan → bagi 1000
+          rawMTD = rawMTD / 1000;
+        }
+        mtdKemarin.salesMTD = rawMTD;
+        mtdKemarin.salesYTD = rawMTD;
       }
 
       // 2. Hitung Target YTD Kum = total MTD terbesar dari bulan-bulan sebelumnya
@@ -1065,8 +1076,11 @@ function setupForm(d){
 
   // ── SEMUA TARGET DARI SUPERVISOR (readonly) ──
   if(t){
-    // Target Month
+    // Target Month - simpan nilai raw dan tampilkan formatted
     var tgtM = parseFloat(String(t.sales_tgt_month||0).replace(/[^0-9.]/g,''))||0;
+    // Jika nilai < 1000000 kemungkinan tersimpan dalam ribuan (data lama) → kalikan 1000
+    if(tgtM > 0 && tgtM < 1000000) tgtM = tgtM * 1000;
+    tgtMonthRaw = tgtM; // simpan angka murni
     document.getElementById('sales_tgt_month').value = tgtM > 0 ? fmtAngka(tgtM) : '';
 
     // Hari Siklus
@@ -1249,7 +1263,24 @@ function showBannerGreen(msg){
 }
 
 // ── HELPERS ──
-function parseN(s){ return parseFloat(String(s||'').replace(/[^0-9.]/g,''))||0; }
+function parseN(s){
+  var str = String(s||'').trim();
+  // Hapus karakter non-numerik kecuali titik dan koma
+  str = str.replace(/[^0-9.,]/g,'');
+  // Format Indonesia: titik = pemisah ribuan, koma = desimal
+  // Jika ada lebih dari 1 titik → format ribuan → hapus semua titik
+  var dotCount = (str.match(/\./g)||[]).length;
+  if(dotCount > 1){
+    str = str.replace(/\./g,'');
+  } else if(dotCount === 1){
+    // Cek apakah titik adalah pemisah ribuan (diikuti tepat 3 digit di akhir)
+    if(/\.\d{3}$/.test(str)){
+      str = str.replace(/\./g,'');
+    }
+  }
+  str = str.replace(/,/g,'.');
+  return parseFloat(str)||0;
+}
 function n(id){ return parseN((document.getElementById(id)||{value:''}).value); }
 function fmtAngka(v){ return Math.round(parseFloat(v)||0).toLocaleString('id-ID'); }
 function setPct(id, num, den){
@@ -1317,14 +1348,14 @@ function calcItem(){
 
 // ── CALC SALES ──
 function calcSales(){
-  // Target Month input Rupiah PENUH (tidak dikali 1000)
-  var tgtM   = n('sales_tgt_month');
-  var hari   = n('sales_hari_siklus');
+  // Gunakan tgtMonthRaw (angka murni) bukan n() yang gagal parse format ribuan
+  var tgtM   = tgtMonthRaw;
+  var hari   = parseFloat(document.getElementById('sales_hari_siklus').value||0)||0;
   var sHi    = n('sales_hi_val') * 1000; // Sales Hi masih ribuan
   var sMTD   = mtdKemarin.salesMTD + sHi;
-  var sYTD   = sMTD; // Growth YTD = Sales MTD bulan ini
-  var tgtYTDKum = ytdKumulatifKemarin; // Target YTD Kum = akumulasi MTD bulan lalu
-  var ytdKum = ytdKumulatifKemarin + sMTD; // YTD Kum total
+  var sYTD   = sMTD;
+  var tgtYTDKum = ytdKumulatifKemarin;
+  var ytdKum = ytdKumulatifKemarin + sMTD;
 
   var tgtDay = hari > 0 ? Math.round(tgtM / hari) : 0;
   document.getElementById('sales_tgt_day').value = tgtDay > 0 ? fmtAngka(tgtDay) : '';
@@ -1333,7 +1364,6 @@ function calcSales(){
   var mtdPct = tgtM   > 0 ? ((sMTD/tgtM  )*100).toFixed(1)+'%' : '';
   var ytdPct = tgtM   > 0 ? ((sYTD/tgtM  )*100).toFixed(1)+'%' : '';
 
-  // Growth YTD Kum % = (YTD Kum - Target YTD Kum) ÷ Target YTD Kum × 100
   var ytdKumPct = '-';
   if(tgtYTDKum > 0){
     ytdKumPct = (((ytdKum - tgtYTDKum) / tgtYTDKum) * 100).toFixed(1) + '%';
@@ -1398,7 +1428,7 @@ function submitForm(){
 
   // Target Month input Rupiah PENUH, Sales Hi masih ribuan
   var rb      = 1000;
-  var tgtM    = n('sales_tgt_month'); // Rupiah penuh langsung
+  var tgtM    = tgtMonthRaw; // Rupiah penuh dari supervisor
   var sHi     = n('sales_hi_val') * rb;
   var sMTD    = mtdKemarin.salesMTD + sHi;
   var sYTD    = sMTD;

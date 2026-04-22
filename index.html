@@ -987,7 +987,7 @@ function setupForm(d){
   // ── HARI SIKLUS ──
   if(t && t.sales_hari_siklus && String(t.sales_hari_siklus).trim() !== ''){
     var el = document.getElementById('sales_hari_siklus');
-    var hariVal = parseFloat(String(t.sales_hari_siklus).replace(/[^0-9.]/g,''))||0;
+    var hariVal = parseN(t.sales_hari_siklus);
     // Jika nilai tidak wajar (> 100) berarti data lama yang salah → reset
     if(hariVal > 100){
       // Nilai tidak wajar — jangan tampilkan, biarkan salesman isi ulang
@@ -1022,7 +1022,7 @@ function setupForm(d){
   if(t && t.sales_tgt_month && String(t.sales_tgt_month).trim() !== ''){
     var tm = document.getElementById('sales_tgt_month');
     // Nilai di sheet tersimpan Rupiah penuh → tampilkan langsung
-    var storedMonth = parseFloat(String(t.sales_tgt_month).replace(/[^0-9.]/g,''))||0;
+    var storedMonth = parseN(t.sales_tgt_month);
     tm.value = storedMonth;
     tm.setAttribute('readonly','');
     tm.classList.remove('wajib'); tm.classList.add('locked');
@@ -1052,7 +1052,7 @@ function setupForm(d){
   var tgtYTDLocked = false;
   if(t && t.sales_tgt_ytd_month && String(t.sales_tgt_ytd_month).trim() !== ''){
     var ytdEl = document.getElementById('sales_tgt_ytd_month');
-    var storedYTD = parseFloat(String(t.sales_tgt_ytd_month).replace(/[^0-9.]/g,''))||0;
+    var storedYTD = parseN(t.sales_tgt_ytd_month);
     ytdEl.value = storedYTD > 10000 ? Math.round(storedYTD/1000) : storedYTD;
     ytdEl.setAttribute('readonly','');
     ytdEl.classList.remove('wajib'); ytdEl.classList.add('locked');
@@ -1077,14 +1077,14 @@ function setupForm(d){
   // ── SEMUA TARGET DARI SUPERVISOR (readonly) ──
   if(t){
     // Target Month - simpan nilai raw dan tampilkan formatted
-    var tgtM = parseFloat(String(t.sales_tgt_month||0).replace(/[^0-9.]/g,''))||0;
+    var tgtM = parseN(t.sales_tgt_month);
     // Jika nilai < 1000000 kemungkinan tersimpan dalam ribuan (data lama) → kalikan 1000
     if(tgtM > 0 && tgtM < 1000000) tgtM = tgtM * 1000;
     tgtMonthRaw = tgtM; // simpan angka murni
     document.getElementById('sales_tgt_month').value = tgtM > 0 ? fmtAngka(tgtM) : '';
 
     // Hari Siklus
-    var hariVal = parseFloat(String(t.sales_hari_siklus||0).replace(/[^0-9.]/g,''))||0;
+    var hariVal = parseN(t.sales_hari_siklus);
     if(hariVal > 0 && hariVal <= 31){
       document.getElementById('sales_hari_siklus').value = hariVal;
       hariSiklusLocked = true;
@@ -1095,12 +1095,12 @@ function setupForm(d){
     if(t.item_target) document.getElementById('item_target').value = t.item_target;
 
     // Target MTD Kum dari supervisor
-    var mtdKumTgt = parseFloat(String(t.mtd_kum_target||0).replace(/[^0-9.]/g,''))||0;
+    var mtdKumTgt = parseN(t.mtd_kum_target);
     mtdKumTarget = mtdKumTgt;
     document.getElementById('sales_tgt_mtd_kum').value = mtdKumTgt > 0 ? fmtAngka(mtdKumTgt) : '';
 
     // Target Growth YTD dari supervisor
-    growthYTDTarget = parseFloat(String(t.growth_ytd_target||0).replace(/[^0-9.]/g,''))||0;
+    growthYTDTarget = parseN(t.growth_ytd_target);
 
     calcSales();
   }

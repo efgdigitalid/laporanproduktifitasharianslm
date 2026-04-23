@@ -787,26 +787,31 @@ function loadMTDKemarin(){
         return;
       }
 
-      // 1. Cari data terbaru dalam siklus aktif (sebelum tgl ini) untuk MTD
+      // 1. Cari data terbaru SEBELUM tanggal ini (dalam siklus aktif)
       var prev = null;
       d.data.forEach(function(r){
         var rTgl = (r['Tanggal']||'').substring(0,10);
-        if(rTgl >= tglAwal && rTgl < tgl){
+        // Ambil semua data sebelum tgl ini dalam siklus (dari tglAwal s/d kemarin)
+        if(rTgl < tgl && rTgl >= tglAwal){
           if(!prev || rTgl > (prev['Tanggal']||'').substring(0,10)) prev = r;
         }
       });
+      // Fallback: jika tidak ada dalam siklus, ambil data terbaru apapun sebelum tgl ini
+      if(!prev){
+        d.data.forEach(function(r){
+          var rTgl = (r['Tanggal']||'').substring(0,10);
+          if(rTgl < tgl){
+            if(!prev || rTgl > (prev['Tanggal']||'').substring(0,10)) prev = r;
+          }
+        });
+      }
       if(prev){
         mtdKemarin.callMTD  = parseFloat(prev['EC Call MTD']||0);
         mtdKemarin.ecMTD    = parseFloat(prev['EC MTD Tk']||0);
         mtdKemarin.itemMTD  = parseFloat(prev['Item Total MTD']||0);
-        // Deteksi format: jika Sales MTD Val jauh lebih besar dari Target Month
-        // berarti data lama tersimpan dalam ribuan, perlu dibagi 1000
         var rawMTD = parseFloat(prev['Sales MTD Val']||0);
-        // Target Month sekarang Rupiah penuh (tgtMonthRaw)
-        // Jika rawMTD > tgtMonthRaw × 20 → kemungkinan data lama dalam ribuan
         var batasMasuk = tgtMonthRaw > 0 ? tgtMonthRaw * 20 : 10000000000;
         if(rawMTD > batasMasuk && rawMTD > 1000000000){
-          // Data lama dalam ribuan → bagi 1000
           rawMTD = rawMTD / 1000;
         }
         mtdKemarin.salesMTD = rawMTD;
@@ -1348,16 +1353,17 @@ function calcItem(){
 
 // ── CALC SALES ──
 function calcSales(){
-  // Gunakan tgtMonthRaw (angka murni) bukan n() yang gagal parse format ribuan
   var tgtM   = tgtMonthRaw;
-  var hari   = parseFloat(document.getElementById('sales_hari_siklus').value||0)||0;
-  var sHi    = n('sales_hi_val') * 1000; // Sales Hi masih ribuan
+  // Baca hari dari field (sudah diset dari supervisor target)
+  var hariEl = document.getElementById('sales_hari_siklus');
+  var hari   = hariEl ? (parseFloat(hariEl.value)||0) : 0;
+  var sHi    = n('sales_hi_val') * 1000;
   var sMTD   = mtdKemarin.salesMTD + sHi;
   var sYTD   = sMTD;
   var tgtYTDKum = ytdKumulatifKemarin;
   var ytdKum = ytdKumulatifKemarin + sMTD;
 
-  var tgtDay = hari > 0 ? Math.round(tgtM / hari) : 0;
+  var tgtDay = (tgtM > 0 && hari > 0) ? Math.round(tgtM / hari) : 0;
   document.getElementById('sales_tgt_day').value = tgtDay > 0 ? fmtAngka(tgtDay) : '';
 
   var hiPct  = tgtDay > 0 ? ((sHi /tgtDay)*100).toFixed(1)+'%' : '';

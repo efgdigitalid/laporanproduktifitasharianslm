@@ -506,6 +506,13 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
           <span class="funit-rb" style="color:var(--muted2)">auto</span>
         </div>
 
+        <div class="frow" id="rowTgtYTDBulan">
+          <span class="flabel">Target YTD Bulan Ini<small>Dari supervisor</small></span><span class="fsep">:</span>
+          <span class="frp">Rp</span>
+          <input class="finp ro" id="sales_tgt_ytd_bulan" readonly tabindex="-1">
+          <span class="funit-rb" style="color:var(--muted2)">auto</span>
+        </div>
+
         <div class="frow" id="rowHariSiklus">
           <span class="flabel">Hari Siklus<small>Dari supervisor</small></span><span class="fsep">:</span>
           <input class="finp ro" id="sales_hari_siklus" readonly tabindex="-1">
@@ -725,6 +732,7 @@ var mtdKemarin = {callMTD:0, ecMTD:0, itemMTD:0, salesMTD:0, salesYTD:0};
 var growthYTDTarget = 0;
 var ytdKumulatifKemarin = 0;
 var mtdKumTarget = 0;
+var ytdBulanTarget = 0; // Target YTD Bulan Ini dari supervisor
 var tgtMonthRaw = 0; // Target Month dalam Rupiah penuh (angka murni)
 
 function fetchSiklus(){
@@ -808,7 +816,12 @@ function loadMTDKemarin(){
       if(prev){
         mtdKemarin.callMTD  = parseFloat(prev['EC Call MTD']||0);
         mtdKemarin.ecMTD    = parseFloat(prev['EC MTD Tk']||0);
-        mtdKemarin.itemMTD  = parseFloat(prev['Item Total MTD']||0);
+        // Item Total MTD bisa tersimpan sebagai Date object di sheet → ambil angka murni
+        var rawItemMTD = prev['Item Total MTD'];
+        if(rawItemMTD instanceof Date || (typeof rawItemMTD === 'string' && rawItemMTD.indexOf('-') > 3)){
+          rawItemMTD = 0; // nilai tidak valid (Date object)
+        }
+        mtdKemarin.itemMTD = parseFloat(rawItemMTD||0);
         var rawMTD = parseFloat(prev['Sales MTD Val']||0);
         var batasMasuk = tgtMonthRaw > 0 ? tgtMonthRaw * 20 : 10000000000;
         if(rawMTD > batasMasuk && rawMTD > 1000000000){
@@ -978,9 +991,10 @@ function setupForm(d){
   document.getElementById('tanggal').value = now.toISOString().split('T')[0];
   document.getElementById('hari').value    = HARI_NAMA[now.getDay()];
 
-  // Reset MTD kemarin dan load dari GAS
+  // Reset MTD kemarin — akan di-load setelah target selesai
   mtdKemarin = {callMTD:0, ecMTD:0, itemMTD:0, salesMTD:0, salesYTD:0};
-  loadMTDKemarin();
+  ytdKumulatifKemarin = 0;
+  tgtMonthRaw = 0;
 
   hariKeSiklus      = (d && d.hari_ke)    || 0;
   hariSiklusLocked  = false;
@@ -1088,8 +1102,11 @@ function setupForm(d){
     tgtMonthRaw = tgtM; // simpan angka murni
     document.getElementById('sales_tgt_month').value = tgtM > 0 ? fmtAngka(tgtM) : '';
 
-    // Hari Siklus
+    // Hari Siklus - pastikan nilainya wajar (1-31 hari)
     var hariVal = parseN(t.sales_hari_siklus);
+    // Jika > 31 kemungkinan data lama dalam format ribuan atau salah → coba bagi 1000
+    if(hariVal > 31 && hariVal < 100000) hariVal = Math.round(hariVal / 1000);
+    if(hariVal > 31) hariVal = 0; // tidak valid
     if(hariVal > 0 && hariVal <= 31){
       document.getElementById('sales_hari_siklus').value = hariVal;
       hariSiklusLocked = true;
@@ -1104,11 +1121,20 @@ function setupForm(d){
     mtdKumTarget = mtdKumTgt;
     document.getElementById('sales_tgt_mtd_kum').value = mtdKumTgt > 0 ? fmtAngka(mtdKumTgt) : '';
 
+    // Target YTD Bulan Ini dari supervisor
+    var ytdBulanTgt = parseN(t.ytd_bulan_target);
+    ytdBulanTarget = ytdBulanTgt;
+    var elYTDBulan = document.getElementById('sales_tgt_ytd_bulan');
+    if(elYTDBulan) elYTDBulan.value = ytdBulanTgt > 0 ? fmtAngka(ytdBulanTgt) : '';
+
     // Target Growth YTD dari supervisor
     growthYTDTarget = parseN(t.growth_ytd_target);
 
     calcSales();
   }
+
+  // Load MTD kemarin SETELAH tgtMonthRaw sudah di-set dari target
+  loadMTDKemarin();
 
   // Render banners
   var area = document.getElementById('bannerArea');
@@ -1368,7 +1394,8 @@ function calcSales(){
 
   var hiPct  = tgtDay > 0 ? ((sHi /tgtDay)*100).toFixed(1)+'%' : '';
   var mtdPct = tgtM   > 0 ? ((sMTD/tgtM  )*100).toFixed(1)+'%' : '';
-  var ytdPct = tgtM   > 0 ? ((sYTD/tgtM  )*100).toFixed(1)+'%' : '';
+  // Growth YTD % = Sales MTD / Target YTD Bulan Ini
+  var ytdPct = ytdBulanTarget > 0 ? ((sYTD/ytdBulanTarget)*100).toFixed(1)+'%' : (tgtM > 0 ? ((sYTD/tgtM)*100).toFixed(1)+'%' : '');
 
   var ytdKumPct = '-';
   if(tgtYTDKum > 0){
@@ -1444,7 +1471,7 @@ function submitForm(){
   var tgtDay  = hari > 0 ? Math.round(tgtM / hari) : 0;
   var hiPct   = tgtDay > 0 ? ((sHi/tgtDay)*100).toFixed(1)+'%' : '';
   var mtdPct  = tgtM   > 0 ? ((sMTD/tgtM)*100).toFixed(1)+'%'  : '';
-  var ytdPct  = tgtM   > 0 ? ((sYTD/tgtM)*100).toFixed(1)+'%'  : '';
+  var ytdPct  = ytdBulanTarget > 0 ? ((sYTD/ytdBulanTarget)*100).toFixed(1)+'%' : (tgtM > 0 ? ((sYTD/tgtM)*100).toFixed(1)+'%' : '');
   var ytdKumPct = tgtYTDKum > 0 ? (((ytdKum-tgtYTDKum)/tgtYTDKum)*100).toFixed(1)+'%' : '';
 
   var odTgt   = n('od_target')    * rb;
@@ -1723,7 +1750,10 @@ function renderRiwayat(data){
     var itTgt = r['Item Target']||'8';
     var itHi  = r['Item Hi Val']||'-';
     var itHiI = r['Item Hi Info']||'-';
-    var itMTD = r['Item MTD Val']||'-';
+    var itMTD = r['Item MTD Val'];
+    // Jika nilai berformat tanggal (Date object dari sheet) → reset ke '-'
+    if(itMTD && String(itMTD).match(/^\d{4}-\d{2}-\d{2}/)) itMTD = '-';
+    itMTD = itMTD||'-';
     var itMTI = r['Item MTD Info']||'-';
     var tgtM  = parseFloat(r['Sales Target Month']||0);
     var tgtD  = parseFloat(r['Sales Target Day']||0);

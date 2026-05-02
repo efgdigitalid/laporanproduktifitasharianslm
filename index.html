@@ -1068,29 +1068,9 @@ function setupForm(d){
   }
 
   // ── TARGET YTD MONTH ──
+  // Field ini sekarang diisi otomatis dari akumulasi MTD bulan lalu
+  // oleh loadMTDKemarin() - tidak perlu diisi dari sheet TARGET
   var tgtYTDLocked = false;
-  if(t && t.sales_tgt_ytd_month && String(t.sales_tgt_ytd_month).trim() !== ''){
-    var ytdEl = document.getElementById('sales_tgt_ytd_month');
-    var storedYTD = parseN(t.sales_tgt_ytd_month);
-    ytdEl.value = storedYTD > 10000 ? Math.round(storedYTD/1000) : storedYTD;
-    ytdEl.setAttribute('readonly','');
-    ytdEl.classList.remove('wajib'); ytdEl.classList.add('locked');
-    var _lty=document.getElementById('lockTgtYTD'); if(_lty) _lty.classList.remove('hidden');
-    tgtYTDLocked = true;
-  } else {
-    var ytdEl2 = document.getElementById('sales_tgt_ytd_month');
-    ytdEl2.removeAttribute('readonly'); ytdEl2.classList.remove('locked');
-    ytdEl2.classList.add('wajib');
-    var _lty2=document.getElementById('lockTgtYTD'); if(_lty2) _lty2.classList.add('hidden');
-    var lewatBatasYTD = hariKeSiklus > 7 && hariKeSiklus < 900;
-    if(lewatBatasYTD){
-      // Tetap bisa isi, hanya peringatan
-      banners.push({type:'orange', icon:'⚠️', msg:'Batas 7 hari lewat, masih bisa isi Target YTD Month.'});
-    } else {
-      var sisaYTD = hariKeSiklus > 0 ? Math.max(0, 7 - hariKeSiklus) : 7;
-      banners.push({type:'blue', icon:'📋', msg:'Isi <strong>Target YTD Month</strong> untuk siklus ini.'});
-    }
-  }
   window._tgtYTDLocked = tgtYTDLocked;
 
   // ── SEMUA TARGET DARI SUPERVISOR (readonly) ──

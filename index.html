@@ -846,14 +846,16 @@ function loadMTDKemarin(){
       var el = document.getElementById('sales_tgt_ytd_month');
       if(el){
         if(ytdKumulatifKemarin > 0){
-          // Pakai akumulasi MTD bulan lalu
           el.value = fmtAngka(Math.round(ytdKumulatifKemarin));
-        } else if(growthYTDTarget > 0){
-          // Fallback: pakai Target YTD Kum dari supervisor jika tidak ada data bulan lalu
-          el.value = fmtAngka(Math.round(growthYTDTarget));
-          ytdKumulatifKemarin = growthYTDTarget;
         } else {
-          el.value = 'Rp 0';
+          // Fallback: pakai dari supervisor (Growth YTD Target atau YTD Bulan Target)
+          var fallback = growthYTDTarget > 0 ? growthYTDTarget : ytdBulanTarget;
+          if(fallback > 0){
+            el.value = fmtAngka(Math.round(fallback));
+            ytdKumulatifKemarin = fallback;
+          } else {
+            el.value = '0';
+          }
         }
       }
 

@@ -658,7 +658,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16
 </div>
 
 <script>
-var GAS_URL = 'https://script.google.com/macros/s/AKfycbzuzjWtKSBAvV2euXi8X1sJOIHcisNySDQOum8KleNyYvmqKUC51FwN0iOzSJ1ncTkh/exec';
+var GAS_URL = 'https://script.google.com/macros/s/AKfycbyiQm4E5tA4480gGsr4igPpb9vyfo2QTTYYp0homSLmBTazvxf5O7jy-du9oQsEBDWZ/exec';
 
 var KODE      = ['S005','S016','S017','S018','S019','S120','S121'];
 var HARI_NAMA = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
@@ -845,24 +845,22 @@ function loadMTDKemarin(){
         }
       });
 
-      // Akumulasi dari DATA_LAPORAN (bulan-bulan yang sudah ada laporannya)
+      // Akumulasi Sales MTD dari DATA_LAPORAN (untuk Growth YTD Kum aktual)
       var akumulasiLaporan = Object.values(perBulan).reduce(function(a,b){ return a+b; }, 0);
 
-      // Total Growth YTD Kum = historis supervisor + akumulasi dari DATA_LAPORAN
+      // ytdKumulatifKemarin = historis + akumulasi laporan (untuk Growth YTD Kum aktual)
       ytdKumulatifKemarin = ytdKumHistoris + akumulasiLaporan;
 
-      var el = document.getElementById('sales_tgt_ytd_month');
-      if(el){
-        if(ytdKumulatifKemarin > 0){
-          el.value = fmtAngka(Math.round(ytdKumulatifKemarin));
+      // Field "Target YTD Kum" = growthYTDTarget (col J + col I dari supervisor)
+      // BUKAN dari ytdKumulatifKemarin
+      var elTgtYTD = document.getElementById('sales_tgt_ytd_month');
+      if(elTgtYTD){
+        if(growthYTDTarget > 0){
+          elTgtYTD.value = fmtAngka(Math.round(growthYTDTarget));
+        } else if(ytdBulanTarget > 0){
+          elTgtYTD.value = fmtAngka(Math.round(ytdBulanTarget));
         } else {
-          var fallback = growthYTDTarget > 0 ? growthYTDTarget : ytdBulanTarget;
-          if(fallback > 0){
-            el.value = fmtAngka(Math.round(fallback));
-            ytdKumulatifKemarin = fallback;
-          } else {
-            el.value = '0';
-          }
+          elTgtYTD.value = '0';
         }
       }
 

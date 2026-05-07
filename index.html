@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Laporan Harian Salesman — EFG Digital</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -13,7 +13,7 @@
   --text:#1a1a2e;--muted:#6c757d;--muted2:#adb5bd;
   --font:'Plus Jakarta Sans',sans-serif;
 }
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;font-weight:500;min-height:100vh}
 .topbar{background:var(--card);border-bottom:1px solid var(--border);padding:13px 18px;
   display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
 .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#3b82f6,#6366f1);
@@ -80,7 +80,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:1
 .sec-body{padding:13px 15px;display:flex;flex-direction:column;gap:9px}
 
 .frow{display:flex;align-items:center;gap:7px;min-height:34px}
-.flabel{font-size:11px;color:var(--muted2);flex:0 0 116px;font-weight:500;line-height:1.3}
+.flabel{font-size:13px;color:var(--muted2);flex:0 0 116px;font-weight:500;line-height:1.3}
 .flabel small{display:block;font-size:9px;color:var(--muted);margin-top:1px;font-weight:400}
 .fsep{color:var(--border);font-size:12px;flex-shrink:0}
 .finp{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;
@@ -732,7 +732,8 @@ var mtdKemarin = {callMTD:0, ecMTD:0, itemMTD:0, salesMTD:0, salesYTD:0};
 var growthYTDTarget = 0;
 var ytdKumulatifKemarin = 0;
 var mtdKumTarget = 0;
-var ytdBulanTarget = 0; // Target YTD Bulan Ini dari supervisor
+var ytdBulanTarget  = 0; // Target YTD Bulan Ini dari supervisor
+var ytdKumHistoris  = 0; // Growth YTD Kum historis dari supervisor (bulan-bulan sebelum sistem)
 var tgtMonthRaw = 0; // Target Month dalam Rupiah penuh (angka murni)
 
 function fetchSiklus(){
@@ -831,24 +832,30 @@ function loadMTDKemarin(){
         mtdKemarin.salesYTD = rawMTD;
       }
 
-      // 2. Hitung Target YTD Kum = total MTD terbesar dari bulan-bulan sebelumnya
+      // 2. Hitung Growth YTD Kumulatif dari DATA_LAPORAN + historis
       var perBulan = {};
       d.data.forEach(function(r){
         var rTgl = (r['Tanggal']||'').substring(0,10);
-        if(rTgl < tglAwal){ // hanya data sebelum siklus ini
+        if(!rTgl) return;
+        // Ambil semua data sebelum siklus ini (semua tahun sebelumnya)
+        if(rTgl < tglAwal){
           var bulan  = rTgl.substring(0,7); // yyyy-MM
           var mtdVal = parseFloat(r['Sales MTD Val']||0);
           if(!perBulan[bulan] || mtdVal > perBulan[bulan]) perBulan[bulan] = mtdVal;
         }
       });
-      // Target YTD Kum = akumulasi MTD dari semua bulan sebelumnya
-      ytdKumulatifKemarin = Object.values(perBulan).reduce(function(a,b){ return a+b; }, 0);
+
+      // Akumulasi dari DATA_LAPORAN (bulan-bulan yang sudah ada laporannya)
+      var akumulasiLaporan = Object.values(perBulan).reduce(function(a,b){ return a+b; }, 0);
+
+      // Total Growth YTD Kum = historis supervisor + akumulasi dari DATA_LAPORAN
+      ytdKumulatifKemarin = ytdKumHistoris + akumulasiLaporan;
+
       var el = document.getElementById('sales_tgt_ytd_month');
       if(el){
         if(ytdKumulatifKemarin > 0){
           el.value = fmtAngka(Math.round(ytdKumulatifKemarin));
         } else {
-          // Fallback: pakai dari supervisor (Growth YTD Target atau YTD Bulan Target)
           var fallback = growthYTDTarget > 0 ? growthYTDTarget : ytdBulanTarget;
           if(fallback > 0){
             el.value = fmtAngka(Math.round(fallback));
@@ -1109,19 +1116,23 @@ function setupForm(d){
     if(t.ec_target)   document.getElementById('ec_target').value   = t.ec_target;
     if(t.item_target) document.getElementById('item_target').value = t.item_target;
 
-    // Target MTD Kum dari supervisor
+    // Target MTD Kum = auto akumulasi Target Month (dari server)
     var mtdKumTgt = parseN(t.mtd_kum_target);
     mtdKumTarget = mtdKumTgt;
-    document.getElementById('sales_tgt_mtd_kum').value = mtdKumTgt > 0 ? fmtAngka(mtdKumTgt) : '';
+    var elMTDKum = document.getElementById('sales_tgt_mtd_kum');
+    if(elMTDKum) elMTDKum.value = mtdKumTgt > 0 ? fmtAngka(Math.round(mtdKumTgt)) : '';
 
-    // Target YTD Bulan Ini dari supervisor
+    // Target YTD Bulan Ini = diisi supervisor (dari server)
     var ytdBulanTgt = parseN(t.ytd_bulan_target);
     ytdBulanTarget = ytdBulanTgt;
     var elYTDBulan = document.getElementById('sales_tgt_ytd_bulan');
-    if(elYTDBulan) elYTDBulan.value = ytdBulanTgt > 0 ? fmtAngka(ytdBulanTgt) : '';
+    if(elYTDBulan) elYTDBulan.value = ytdBulanTgt > 0 ? fmtAngka(Math.round(ytdBulanTgt)) : '';
 
-    // Target Growth YTD dari supervisor
+    // Target YTD Kum = col J + col I (auto dari server)
     growthYTDTarget = parseN(t.growth_ytd_target);
+
+    // Growth YTD Kum Historis = bulan-bulan sebelum sistem (dari supervisor)
+    ytdKumHistoris = parseN(t.ytd_kum_historis);
 
     calcSales();
   }

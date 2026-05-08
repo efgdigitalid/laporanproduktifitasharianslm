@@ -837,18 +837,25 @@ function loadMTDKemarin(){
       d.data.forEach(function(r){
         var rTgl = (r['Tanggal']||'').substring(0,10);
         if(!rTgl) return;
-        // Ambil semua data sebelum siklus ini (semua tahun sebelumnya)
         if(rTgl < tglAwal){
-          var bulan  = rTgl.substring(0,7); // yyyy-MM
+          var bulan  = rTgl.substring(0,7);
           var mtdVal = parseFloat(r['Sales MTD Val']||0);
           if(!perBulan[bulan] || mtdVal > perBulan[bulan]) perBulan[bulan] = mtdVal;
         }
       });
 
-      // Akumulasi Sales MTD dari DATA_LAPORAN (untuk Growth YTD Kum aktual)
+      // Deteksi dan koreksi data lama (tersimpan dalam ribuan)
+      var batasMTD = tgtMonthRaw > 0 ? tgtMonthRaw * 20 : 50000000000;
+      Object.keys(perBulan).forEach(function(bulan){
+        if(perBulan[bulan] > batasMTD && perBulan[bulan] > 1000000000){
+          perBulan[bulan] = Math.round(perBulan[bulan] / 1000);
+        }
+      });
+
+      // Akumulasi Sales MTD dari DATA_LAPORAN
       var akumulasiLaporan = Object.values(perBulan).reduce(function(a,b){ return a+b; }, 0);
 
-      // ytdKumulatifKemarin = historis + akumulasi laporan (untuk Growth YTD Kum aktual)
+      // ytdKumulatifKemarin = historis supervisor + akumulasi dari DATA_LAPORAN
       ytdKumulatifKemarin = ytdKumHistoris + akumulasiLaporan;
 
       // Field "Target YTD Kum" = growthYTDTarget (col J + col I dari supervisor)

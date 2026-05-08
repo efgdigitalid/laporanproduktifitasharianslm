@@ -840,23 +840,34 @@ function loadMTDKemarin(){
         if(rTgl < tglAwal){
           var bulan  = rTgl.substring(0,7);
           var mtdVal = parseFloat(r['Sales MTD Val']||0);
+
+          // Validasi: Sales MTD Val harus angka wajar (> 0 dan < 100 miliar per bulan)
+          if(isNaN(mtdVal) || mtdVal <= 0 || mtdVal > 100000000000) return;
+
+          // Koreksi data lama dalam ribuan: jika > 20x Target Month → bagi 1000
+          if(tgtMonthRaw > 0 && mtdVal > tgtMonthRaw * 20){
+            mtdVal = Math.round(mtdVal / 1000);
+          }
+          // Setelah koreksi, pastikan masih wajar (max 3x Target Month)
+          if(tgtMonthRaw > 0 && mtdVal > tgtMonthRaw * 3){
+            mtdVal = tgtMonthRaw; // cap di Target Month jika masih terlalu besar
+          }
+
           if(!perBulan[bulan] || mtdVal > perBulan[bulan]) perBulan[bulan] = mtdVal;
         }
       });
 
-      // Deteksi dan koreksi data lama (tersimpan dalam ribuan)
-      var batasMTD = tgtMonthRaw > 0 ? tgtMonthRaw * 20 : 50000000000;
-      Object.keys(perBulan).forEach(function(bulan){
-        if(perBulan[bulan] > batasMTD && perBulan[bulan] > 1000000000){
-          perBulan[bulan] = Math.round(perBulan[bulan] / 1000);
-        }
-      });
-
-      // Akumulasi Sales MTD dari DATA_LAPORAN
       var akumulasiLaporan = Object.values(perBulan).reduce(function(a,b){ return a+b; }, 0);
+
+      // Sanity check: akumulasi tidak boleh > 24x Target Month
+      var maxWajar = tgtMonthRaw > 0 ? tgtMonthRaw * 24 : 20000000000;
+      if(akumulasiLaporan > maxWajar) akumulasiLaporan = 0;
 
       // ytdKumulatifKemarin = historis supervisor + akumulasi dari DATA_LAPORAN
       ytdKumulatifKemarin = ytdKumHistoris + akumulasiLaporan;
+
+      // Sanity check final
+      if(ytdKumulatifKemarin > maxWajar * 2) ytdKumulatifKemarin = ytdKumHistoris;
 
       // Field "Target YTD Kum" = growthYTDTarget (col J + col I dari supervisor)
       // BUKAN dari ytdKumulatifKemarin

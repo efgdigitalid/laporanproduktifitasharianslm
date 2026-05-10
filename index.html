@@ -1142,7 +1142,7 @@ function setupForm(d){
     var mtdKumTgt = parseN(t.mtd_kum_target);
     mtdKumTarget = mtdKumTgt;
     var elMTDKum = document.getElementById('sales_tgt_mtd_kum');
-    if(elMTDKum) elMTDKum.value = mtdKumTgt > 0 ? fmtAngka(Math.round(mtdKumTgt)) : ''
+    if(elMTDKum) elMTDKum.value = mtdKumTgt > 0 ? fmtAngka(Math.round(mtdKumTgt)) : '';
 
     // Target YTD Bulan Ini = diisi supervisor (dari server)
     var ytdBulanTgt = parseN(t.ytd_bulan_target);

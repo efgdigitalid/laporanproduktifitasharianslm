@@ -870,15 +870,21 @@ function loadMTDKemarin(){
       if(ytdKumulatifKemarin > maxWajar * 2) ytdKumulatifKemarin = ytdKumHistoris;
 
       // Field "Target YTD Kum" = growthYTDTarget (col J + col I dari supervisor)
-      // BUKAN dari ytdKumulatifKemarin
       var elTgtYTD = document.getElementById('sales_tgt_ytd_month');
       if(elTgtYTD){
-        if(growthYTDTarget > 0){
-          elTgtYTD.value = fmtAngka(Math.round(growthYTDTarget));
-        } else if(ytdBulanTarget > 0){
-          elTgtYTD.value = fmtAngka(Math.round(ytdBulanTarget));
+        var tgtYTDDisplay = growthYTDTarget > 0 ? growthYTDTarget
+                          : (ytdBulanTarget > 0 ? ytdBulanTarget
+                          : (tgtMonthRaw > 0 ? tgtMonthRaw : 0));
+        elTgtYTD.value = tgtYTDDisplay > 0 ? fmtAngka(Math.round(tgtYTDDisplay)) : '';
+      }
+
+      // Field "Target YTD Bulan Ini" - fallback ke Target Month jika belum diisi supervisor
+      var elYTDBulan = document.getElementById('sales_tgt_ytd_bulan');
+      if(elYTDBulan && (!elYTDBulan.value || elYTDBulan.value === '0') && tgtMonthRaw > 0){
+        if(ytdBulanTarget > 0){
+          elYTDBulan.value = fmtAngka(Math.round(ytdBulanTarget));
         } else {
-          elTgtYTD.value = '0';
+          elYTDBulan.value = fmtAngka(Math.round(tgtMonthRaw));
         }
       }
 
@@ -1148,7 +1154,9 @@ function setupForm(d){
     growthYTDTarget = parseN(t.growth_ytd_target);
 
     // Growth YTD Kum Historis = bulan-bulan sebelum sistem (dari supervisor)
-    ytdKumHistoris = parseN(t.ytd_kum_historis);
+    // Growth YTD Kum Historis - validasi ketat, hanya pakai jika < 100 miliar
+    var rawHist = parseN(t.ytd_kum_historis);
+    ytdKumHistoris = (rawHist > 0 && rawHist < 100000000000) ? rawHist : 0;
 
     calcSales();
   }
@@ -1197,7 +1205,7 @@ function saveHariSiklus(val){
       siklus: siklusAktif,
       sales_hari_siklus: val, // langsung, bukan ribuan
       sales_tgt_month: String(parseFloat(document.getElementById('sales_tgt_month').value||0) * 1000),
-      sales_tgt_ytd_month: String(parseFloat(document.getElementById('sales_tgt_ytd_month').value||0) * 1000),
+      sales_tgt_ytd_month: String(ytdKumulatifKemarin||0),
       od_target: ''
     })
   })
@@ -1249,7 +1257,7 @@ function saveTgtMonth(val){
       kode_salesman: pilihanKode,
       siklus: siklusAktif,
       sales_tgt_month: valAsli,
-      sales_tgt_ytd_month: String(parseFloat(document.getElementById('sales_tgt_ytd_month').value||0) * 1000),
+      sales_tgt_ytd_month: String(ytdKumulatifKemarin||0),
       sales_hari_siklus: document.getElementById('sales_hari_siklus').value || '',
       od_target: ''
     })
@@ -1408,6 +1416,9 @@ function calcSales(){
   var sYTD   = sMTD;
   var tgtYTDKum = ytdKumulatifKemarin;
   var ytdKum = ytdKumulatifKemarin + sMTD;
+  // Hard cap: Growth YTD Kum tidak boleh > 24x Target Month (max 2 tahun)
+  var maxYTD = tgtM > 0 ? tgtM * 24 : 50000000000;
+  if(ytdKum > maxYTD) ytdKum = sMTD; // reset ke MTD saja jika tidak wajar
 
   var tgtDay = (tgtM > 0 && hari > 0) ? Math.round(tgtM / hari) : 0;
   document.getElementById('sales_tgt_day').value = tgtDay > 0 ? fmtAngka(tgtDay) : '';

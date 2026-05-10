@@ -1138,11 +1138,11 @@ function setupForm(d){
     if(t.ec_target)   document.getElementById('ec_target').value   = t.ec_target;
     if(t.item_target) document.getElementById('item_target').value = t.item_target;
 
-    // Target MTD Kum = auto akumulasi Target Month (dari server)
+    // Target MTD Kum = auto akumulasi (Historis + Target Month dari sheet)
     var mtdKumTgt = parseN(t.mtd_kum_target);
     mtdKumTarget = mtdKumTgt;
     var elMTDKum = document.getElementById('sales_tgt_mtd_kum');
-    if(elMTDKum) elMTDKum.value = mtdKumTgt > 0 ? fmtAngka(Math.round(mtdKumTgt)) : '';
+    if(elMTDKum) elMTDKum.value = mtdKumTgt > 0 ? fmtAngka(Math.round(mtdKumTgt)) : ''
 
     // Target YTD Bulan Ini = diisi supervisor (dari server)
     var ytdBulanTgt = parseN(t.ytd_bulan_target);

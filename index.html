@@ -732,8 +732,9 @@ var mtdKemarin = {callMTD:0, ecMTD:0, itemMTD:0, salesMTD:0, salesYTD:0};
 var growthYTDTarget = 0;
 var ytdKumulatifKemarin = 0;
 var mtdKumTarget = 0;
-var ytdBulanTarget  = 0; // Target YTD Bulan Ini dari supervisor
-var ytdKumHistoris  = 0; // Growth YTD Kum historis dari supervisor (bulan-bulan sebelum sistem)
+var ytdBulanTarget   = 0; // Target YTD Bulan Ini dari supervisor
+var ytdKumHistoris   = 0; // Growth YTD Kum historis dari supervisor (bulan-bulan sebelum sistem)
+var bulanMulaiLaporan = ''; // Bulan pertama di DATA_LAPORAN (format yyyy-MM)
 var tgtMonthRaw = 0; // Target Month dalam Rupiah penuh (angka murni)
 
 function fetchSiklus(){
@@ -839,6 +840,10 @@ function loadMTDKemarin(){
         if(!rTgl) return;
         if(rTgl < tglAwal){
           var bulan  = rTgl.substring(0,7);
+
+          // Filter: hanya bulan >= bulanMulaiLaporan
+          if(bulanMulaiLaporan && bulan < bulanMulaiLaporan) return;
+
           var mtdVal = parseFloat(r['Sales MTD Val']||0);
 
           // Validasi: Sales MTD Val harus angka wajar (> 0 dan < 100 miliar per bulan)
@@ -1157,6 +1162,9 @@ function setupForm(d){
     // Growth YTD Kum Historis - validasi ketat, hanya pakai jika < 100 miliar
     var rawHist = parseN(t.ytd_kum_historis);
     ytdKumHistoris = (rawHist > 0 && rawHist < 100000000000) ? rawHist : 0;
+
+    // Bulan Mulai Laporan - filter akumulasi DATA_LAPORAN
+    bulanMulaiLaporan = String(t.bulan_mulai_laporan||'').trim(); // format yyyy-MM
 
     calcSales();
   }

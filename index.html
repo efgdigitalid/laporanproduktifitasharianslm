@@ -763,6 +763,17 @@ function fetchSiklus(){
     }).catch(function(){});
 }
 
+// Helper: set Target YTD Kum dari growthYTDTarget (selalu dipanggil)
+function setTargetYTDKumDisplay(){
+  var elTgtYTD = document.getElementById('sales_tgt_ytd_month');
+  if(elTgtYTD){
+    var tgtYTDDisplay = growthYTDTarget > 0 ? growthYTDTarget
+                      : (ytdBulanTarget > 0 ? ytdBulanTarget
+                      : (tgtMonthRaw > 0 ? tgtMonthRaw : 0));
+    elTgtYTD.value = tgtYTDDisplay > 0 ? fmtAngka(Math.round(tgtYTDDisplay)) : '';
+  }
+}
+
 function loadMTDKemarin(){
   if(!pilihanKode) return;
   var tgl = document.getElementById('tanggal').value;
@@ -780,8 +791,7 @@ function loadMTDKemarin(){
 
   if(tgl <= tglAwal){
     // Hari pertama siklus - tidak ada data sebelumnya
-    var tgtYTDEl = document.getElementById('sales_tgt_ytd_month');
-    if(tgtYTDEl) tgtYTDEl.value = '0';
+    setTargetYTDKumDisplay(); // tetap tampilkan Target YTD Kum dari supervisor
     calcEC(); calcItem(); calcSales();
     return;
   }
@@ -793,6 +803,7 @@ function loadMTDKemarin(){
     .then(function(r){ return r.json(); })
     .then(function(d){
       if(!d.ok||!d.data||!d.data.length){
+        setTargetYTDKumDisplay(); // tampilkan dari supervisor meski tidak ada data laporan
         calcEC(); calcItem(); calcSales();
         return;
       }
@@ -874,14 +885,8 @@ function loadMTDKemarin(){
       // Sanity check final
       if(ytdKumulatifKemarin > maxWajar * 2) ytdKumulatifKemarin = ytdKumHistoris;
 
-      // Field "Target YTD Kum" = growthYTDTarget (col J + col I dari supervisor)
-      var elTgtYTD = document.getElementById('sales_tgt_ytd_month');
-      if(elTgtYTD){
-        var tgtYTDDisplay = growthYTDTarget > 0 ? growthYTDTarget
-                          : (ytdBulanTarget > 0 ? ytdBulanTarget
-                          : (tgtMonthRaw > 0 ? tgtMonthRaw : 0));
-        elTgtYTD.value = tgtYTDDisplay > 0 ? fmtAngka(Math.round(tgtYTDDisplay)) : '';
-      }
+      // Set Target YTD Kum dari supervisor (selalu tampil)
+      setTargetYTDKumDisplay();
 
       // Field "Target YTD Bulan Ini" - fallback ke Target Month jika belum diisi supervisor
       var elYTDBulan = document.getElementById('sales_tgt_ytd_bulan');
@@ -896,6 +901,7 @@ function loadMTDKemarin(){
       calcEC(); calcItem(); calcSales();
     })
     .catch(function(){
+      setTargetYTDKumDisplay(); // tampilkan dari supervisor meski fetch gagal
       calcEC(); calcItem(); calcSales();
     });
 }
@@ -1213,7 +1219,7 @@ function saveHariSiklus(val){
       siklus: siklusAktif,
       sales_hari_siklus: val, // langsung, bukan ribuan
       sales_tgt_month: String(parseFloat(document.getElementById('sales_tgt_month').value||0) * 1000),
-      sales_tgt_ytd_month: String(ytdKumulatifKemarin||0),
+      sales_tgt_ytd_month: String(growthYTDTarget||0), // Target YTD Kum dari supervisor
       od_target: ''
     })
   })
@@ -1265,7 +1271,7 @@ function saveTgtMonth(val){
       kode_salesman: pilihanKode,
       siklus: siklusAktif,
       sales_tgt_month: valAsli,
-      sales_tgt_ytd_month: String(ytdKumulatifKemarin||0),
+      sales_tgt_ytd_month: String(growthYTDTarget||0), // Target YTD Kum dari supervisor
       sales_hari_siklus: document.getElementById('sales_hari_siklus').value || '',
       od_target: ''
     })
